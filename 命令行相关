@@ -1,0 +1,945 @@
+如果 adb操作提示 Operation not permitted
+
+请先 adb root && adb remount，然后再操作
+
+exit 退出当前 adb操作
+
+杀掉这个应用，清掉数据：
+adb shell pm clear com.mega.settings
+
+
+本机刷的e0y，Redwood新增信号后，需要把新增的代码导入到机器里，由王锐 给  android.hardware.automotive.vehicle@2.0-mega-service  和 RedwoodCarService.apk 两个文件：
+然后进行导入：
+youchanghuang@ych-HP-ProBook:~/下载$ adb root 
+adbd is already running as root
+youchanghuang@ych-HP-ProBook:~/下载$ adb remount
+remount succeeded
+youchanghuang@ych-HP-ProBook:~/下载$ adb shell
+redwood:/ # cd vendor/bin/hw                                                   
+hw/      hwclock
+redwood:/ # cd vendor/bin/hw                                                   
+redwood:/vendor/bin/hw # ls -l | grep auto
+-rwxr-xr-x 1 root      shell       60456 2022-12-27 07:37 android.hardware.automotive.audiocontrol@2.0-service
+-rwxr-xr-x 1 root      shell     2312016 2022-12-27 07:38 android.hardware.automotive.vehicle@2.0-mega-service
+-rwxr-xr-x 1 root      shell      339488 2022-12-27 07:37 android.hardware.automotive.vehicle@2.0-service
+-rwxr-xr-x 1 root      shell       43528 2022-12-27 07:38 vendor.qti.automotive.qcarcam@1.0-service
+redwood:/vendor/bin/hw # exit                                                                                                                                   
+youchanghuang@ych-HP-ProBook:~/下载$ adb push '/home/youchanghuang/下载/android.hardware.automotive.vehicle@2.0-mega-service' /vendor/bin/hw
+/home/youchanghuang/下载/android.hardware.automotive.vehicle@2.0-mega-service: 1 file pushed. 31.1 MB/s (2344008 bytes in 0.072s)
+youchanghuang@ych-HP-ProBook:~/下载$ adb shell
+redwood:/ # sync
+redwood:/ # sync
+redwood:/ # exit'
+> ^C
+130|redwood:/ # exit
+youchanghuang@ych-HP-ProBook:~/下载$ adb sehll
+adb: usage: unknown command sehll
+youchanghuang@ych-HP-ProBook:~/下载$ adb shell
+redwood:/ # cd syste
+system/      system_ext/
+redwood:/ # cd system/pr                                                                                                                                        
+priv-app/  product/
+redwood:/ # cd system/priv-app/RedwoodCarService/                                                                                                               
+redwood:/system/priv-app/RedwoodCarService # ls
+RedwoodCarService.apk
+redwood:/system/priv-app/RedwoodCarService # exit
+youchanghuang@ych-HP-ProBook:~/下载$ adb push RedwoodCarService.apk system/priv-app/RedwoodCarService
+RedwoodCarService.apk: 1 file pushed. 28.2 MB/s (1299129 bytes in 0.044s)
+youchanghuang@ych-HP-ProBook:~/下载$ sync
+youchanghuang@ych-HP-ProBook:~/下载$ adb shell
+redwood:/ # sync
+redwood:/ # cd syste                                                                                                                                            
+system/      system_ext/
+redwood:/ # cd system/pr                                                                                                                                        
+priv-app/  product/
+redwood:/ # cd system/priv-app/RedwoodCarService/                                                                                                               
+redwood:/system/priv-app/RedwoodCarService # ls -l        
+total 1272
+-rw-r--r-- 1 root root 1299129 2022-12-29 15:35 RedwoodCarService.apk
+redwood:/system/priv-app/RedwoodCarService # sync
+redwood:/system/priv-app/RedwoodCarService # youchanghuang@ych-HP-ProBook:~/下载$ 
+
+
+
+apt基本命令：
+安装软件： sudo apt install [software] ；
+卸载软件： sudo apt remove [software] ；
+更新可用软件包： sudo apt update ；
+更新已安装软件包： sudo apt upgrade 。
+
+
+
+电脑上如何模拟信号发送进行调试：
+使用最新的 CherySomeIP，将板子刷成相应的SOC，准备好 以太网转接盒，
+根据read_me 和 多IP设定.docx文档 来配置，第一次要 sudo apt install vlan  
+不会的地方请教他人，比如 胡保军，王锐
+sudo bash vlan_chery.sh
+最后在 someip_case目录下，执行  python3 display_gui.py  即可启动工具。
+
+
+
+adb remount
+
+意义：remount /system/, /etc/等路径的读写权限，使当前用户有权限读写设备中/system/, /etc/等路径下的文件。使用先必须先用adb root命令。
+
+常见问题： remount失败。
+
+解决方案： 如果adb remount 命令提示remount失败，则可以先运行adb disable-verity命令，然后重启设备，最后再使用root和remount命令。
+
+adb disable-verity
+adb reboot
+adb root
+adb remount
+
+
+
+
+git reset --soft HEAD^
+
+
+当本地提交和远端提交出现冲突的时候：（这只是一种思路）
+将本地重置到远端上一个提交：
+git reset HEAD~1
+git status
+git pull
+git reset --hard HEAD~2
+git pull
+git stash pop
+git status
+然后看看是否需要重新提交
+
+
+
+使用QFIL刷SOC
+拿到串口线，按住短接口进行上电，
+SelectPort 9008 
+Load Content 到选中的soc的根目录，选中 qfi_bin/Content文件
+Select Programmer  选中下载的qfi_bin/boot_8155/boot_images/QcomPkg/SDMPkg/855/Bin/AU/RELEASE/prog_firehose_ddr.elf
+
+最后：Download Content
+
+
+
+CarSetting 本地模拟发送信号：
+电脑连上板子后，
+adb shell
+telnet cdc-qnx
+root
+
+然后：
+on -T msg_center_t -u msg_center msg_center_test -t DrivingInfo/DrivingModeOut '{"extension":null,"relative":false,"time":0,"type":4194304,"unit":"","valid":true,"value":0}' 
+send data success: {"extension":null,"relative":false,"time":0,"type":4194304,"unit":"","valid":true,"value":0}
+
+其中 DrivingInfo/DrivingModeOut  是信号，'{"extension":null,"relative":false,"time":0,"type":4194304,"unit":"","valid":true,"value":0}' 是值
+
+空调模拟发送信号：
+adb shell  msg_center_test -t Sensor/OutsideAirQuality  '{"value":10.5}'
+其中 Sensor/OutsideAirQuality 是信号，'{"value":10.5}' 是值。
+
+
+接受信息：
+msg_center_test -r Sensor/OutsideAirQuality
+
+
+qnx 服务进程过滤：
+ps -ef | grep ais_vision_server
+
+
+截屏 当前 板子：
+adb shell screencap -p /sdcard/1.png && adb pull /sdcard/1.png
+能将当前板子的ui截屏放到当前电脑目录
+
+录屏：
+scrcpy -r test.mp4
+
+
+wireshark使用：
+sudo wireshark 启动
+上面过滤器输入someip.serviceid ==0xa923
+可以过滤出来相关服务。
+
+过滤服务id的条件:
+someipsd.entry.serviceid==0xa701
+过滤出来后，即有Offer，又有Subscribe 和 SubscribeAck，这是一个完整的牵手过程，说明这个服务正常的。
+
+
+
+
+
+运行git remote列出现有的远程，并查看其名称和URL：
+
+ git remote -v
+
+输出如下所示内容：
+
+originhttps://github.com/user/repo_name.git (fetch)
+
+originhttps://github.com/user/repo_name.git (push)
+
+使用git remote set-url命令，后跟远程名称和远程URL：
+
+ git remote set-url
+
+远程URL可以以HTTPS或SSH开头，具体取决于你使用的协议，如果未指定协议，则默认为SSH，该URL可以在Git托管服务的存储库页面上找到。
+
+例如，要将origin的URL更改为git@gitserver.com:user/repo_name.git，你可以输入：
+
+$ git remote set-url origin git@gitserver.com:user/repo_name.git
+
+
+
+adb shell
+logcat | grep TMS_ 可以过滤输入信号
+TMS_是输入信号的前缀
+既可以过滤输入，也可以过滤输出
+logcat | grep TMS_Mode_Front
+logcat | grep eHMI_BlowFace
+
+
+
+reset到远程最新的提交：
+git reset --hard mega/release/glacier_hqx.1.2.1_20221021
+
+
+处于编辑器里，如果不想编辑任何东西，可以 :quit!  退出
+gerrit上cp冲突的情况下，可以 down patch，然后复制 cp命令行，工程切换到这个分支，执行命令行，
+这个时候一定要先运行项目，看看哪些地方冲突
+然后本地解决冲突，然后 git add .   git commit --amend 
+然后 git push mega HEAD:refs/for/release/glacier_hqx.1.2.1_20221021
+推送到对应分支，然后gerrit上加对应的review的人。
+
+ubutun安装vim：
+sudo apt-get install vim
+
+git修改文本编辑器为vim
+git config --global core.editor "vim"
+
+
+
+
+
+实车上抓SOMEIP日志
+adb root 
+adb remount
+adb  shell
+cd data/
+mkdir debug
+cd debug
+tcpdump -i eth0.62 -w  xxxx.pcap     (xxxx是文件的名字最好命名为车号加日期，如PT105_1223.pcap)
+
+操作UI，操作完之后，CTRL+C 结束监听信号。
+退出adb shell
+adb pull /data/debug/xxxx.pcap 
+
+
+
+
+
+E0X如何在 as的日志里过滤出输入信号：
+RedwoodSomeIpProperty
+并使用 No Filters
+
+
+E0X OTA升级包 更新方式：
+下载最新的 e0y或者e03的soc的ota包，放在U盘里，u盘插在蓝色的usb中，然后中控选中 升级测试工具 ，会有弹框，选中右下角的DMC，然后选中U盘，
+然后选中对应的升级包，拷贝，等进度条跑完，点击确定，可以拔出u盘，后面自动升级。
+
+
+adb reboot 重启android
+
+查看soc版本号：（可能会改变）
+adb shell
+telnet cdc-qnx
+root
+cat /etc/version
+输出如下：
+VERSION=1.130.144.32812-20230207044856
+DEVICE=redwood
+VARIANT=userdebug
+BRANCH=release_redwood_hqx.1.2.1_20230103
+OEM_VERSION=00.01.02.52
+
+怎么抓仪表的日志：
+adb  root
+adb pull qlog .（不确定最后这个 . 是否必须，不加. 也能导出）
+抓仪表日志，应该还有其他的方式，比如：（本人没试过）
+adb shell
+telnet cdc-qnx
+root
+tcpdump -i vlan62 -w xxx.pacp
+cp xxx.pacp /ota/android
+exit 
+exit
+adb pull /ota/xxx.pcap
+
+
+
+adb pull log 拉的是安卓的log
+
+adb 进cdc-qnx之后，执行reset能重启安卓和qnx
+
+
+
+读取配置字：
+adb shell getprop
+
+adb shell getprop | grep PM25_MONITOR
+如果输出是1，就表示支持 pm2.5传感器。
+
+
+如果wireshark过滤不出来信息，找陈伟帮忙，应该要有件 decode as配置一些信息
+
+
+adb安装apk：
+准备engineeringmode.apk，
+adb install engineeringmode.apk(这里直接把apk拖到命令行)
+启动apk：
+adb shell am start com.mega.engineeringmode/.MainActivity
+
+ota升级的时候，如果进度条很慢，可能是内存被占用，
+adb shell
+telnet cdc-qnx
+root
+slay ic_service
+多执行几次 slay ic_service，直到提示  slay: Unable to find process 'ic_service' 表示杀死了这个进程。
+这样升级会快点。
+
+dumpsys car_service get-power-state
+ON(1)代表正常,屏幕应该亮起
+
+如果是 STAND_BY(6)，表示线子没接好，或者软件有问题，屏幕亮不起来。
+
+
+wireshark 信息过滤：
+someipsd.entry.serviceid==0xA920
+可以过滤出 offer  subscribe  subscribleAck
+过滤出具体的服务并且能看到发出去的值
+ip.addr == 192.168.62.31 && someip.serviceid==0xA920&&someip.payload==01
+
+wireshark no time source destination 这一行的，右键选中pref，可以+一个payload，属性就写someip.payload
+
+使用 someipsd.entry.serviceid==0xA966过滤，如果出来的结果只有offer，没有subscribe的话，说明我们发出去，对方没有订阅，是对方的问题
+如果对方没有订阅，使用someip.serviceid==0xA966过滤的结果是空白的。
+如果对方订阅了，使用someip.serviceid==0xA966过滤的结果 会有payload的值，paylaod就是我们代码发出去的值。
+
+someipsd.entry.serviceid ==0xa923  someipsd.entry 是用来查看 someip的握手过程
+点击offer这一行，查看 SOME/IP Service Discovery Protocol ，展开Entries Array ,会有很多Offer Service,找到我们想要的Service ID，比如 0xa923,展开以后，有个Index,看看是多少行；然后在Options Array 里找到对应的行数，就能看到我们发的是TCP还是UDP
+
+点击Subscribe，相同方式可以看到 对方给我们回的是UDP还是TCp。
+
+
+
+adb shell
+telnet cdc-qnx
+root
+logcat -w|grep "M short to ground detected!"
+
+查看麦克风是否通了
+如果显示 1 2 3 4，就表示 1 2 3 4 都没通
+
+麦克风接法：A5接负极，A6接正极。
+
+启动录音工具：
+adb shell am start -n com.mega.audiotesttools/.MainActivity
+
+
+查看电源模式：on表示中控ui界面可以触摸
+adb shell dumpsys car_service get-power-state
+
+
+adb root
+adb shell
+netstat -anp | grep someipd
+显示 0.0.0.0:* 的表示someip没连上
+显示 192.168.62.3:30501这种形式的，表示连上了。
+
+
+
+T1E实车抓日志：
+u盘根目录，新建 log.mega.co 文件夹，u盘里不要有升级包之类的东西。
+u盘插到车上usb接口，当前软件要处于usb模式。
+
+T1E切换usb模式和adb模式：
+本地设置 ，系统tab的右下角，多次点击，弹出工程模式，可以进行adb和usb切换
+
+切换到adb模式下，怎么抓日志？
+USER版本开root的方法：
+1.telnet cdc-qnx（先输root ，再输入密码@mega#cdc!)
+2.touch persist/enable_dbg
+3.reset
+关闭android root权限步骤
+1.telnet cdc-qnx（先输root ，再输入密码@mega#cdc!)
+2.rm persist/enable_dbg
+3.reset
+大家记得打开了不用的话要关掉，尤其是在客户现场使用尤其注意
+
+用这个方式可以通过ADB将log取出去：
+拉取到自己电脑指定目录：
+adb pull /log '/home/youchanghuang/下载/test/0223/123' 
+
+拉取到自己电脑命令行当前目录：
+adb pull /log 
+
+
+
+切换到目标目录，过滤这个目录下的日志
+zgrep "value: 1" *//过滤出所有 包含value: 1 的语句（有空格的情况下，需要用 ""）
+或者：
+zgrep EHMI_ACADJUST_NOTIFY_AC_REQUEST  *
+
+
+过滤出指定包名的进程：
+adb shell ps | grep com.mega
+杀掉指定进程：
+adb shell kill 2499
+
+查看第一个屏幕：
+scrcpy --display 0
+查看第二个屏幕
+scrcpy --display 1
+查看第三个屏幕
+scrcpy --display 2
+
+scrcpy默认打开第一个屏幕
+
+
+logcat -b
+日志等级：（一定要了解这些日志等级的含义）
+main system radio events crash default all
+system： 系统层面发出来的日志
+events：activity切换的日志
+
+日志里有
+switch to system 
+switch to events
+等关键字
+
+日志里搜索Booting linux，这是第一次开机触发；
+
+开发阶段可以多打印日志，这样上线后可以方便拿日志。
+
+
+
+adb shell getevent
+
+输出类似下面这种日志：
+add device 1: /dev/input/event2
+  name:     "QVM virtio-input (keyboard)"
+add device 2: /dev/input/event1
+  name:     "QVM virtio-input (touchscreen)"
+add device 3: /dev/input/event0
+
+然后点击屏幕，日志输出：
+/dev/input/event1: 0001 014a 00000001
+/dev/input/event1: 0003 0039 00000000
+/dev/input/event1: 0003 0035 0000047e
+/dev/input/event1: 0003 0036 000004e5
+/dev/input/event1: 0000 0000 00000000
+/dev/input/event1: 0003 0039 ffffffff
+/dev/input/event1: 0001 014a 00000000
+/dev/input/event1: 0000 0000 00000000
+/dev/input/event1: 0001 014a 00000001
+/dev/input/event1: 0003 0039 00000000
+/dev/input/event1: 0003 0035 0000049a
+/dev/input/event1: 0003 0036 00000503
+/dev/input/event1: 0000 0000 00000000
+/dev/input/event1: 0003 0039 ffffffff
+/dev/input/event1: 0001 014a 00000000
+如果点击屏幕，没有这种日志输出，就是屏幕的问题，给高兵；有输出，但是屏幕依然没反应，需要根据日志分析。
+
+
+git push mega HEAD:refs/for/master
+报错：
+fatal: Service not enabled
+fatal: 远程错误：Service not enabled
+解决步骤：
+git remote -v
+mega	ssh://youchang.huang@git-slave-wh.i-tetris.com:29418/apps/gladius/android/chery/e0x/modules (fetch)
+mega	ssh://youchang.huang@git-slave-wh.i-tetris.com:29418/apps/gladius/android/chery/e0x/modules (push)
+
+然后改成北京的地址：
+git remote set-url mega ssh://youchang.huang@git.i-tetris.com:29418/apps/gladius/android/chery/e0x/modules
+
+注意：有的时候 是origin，需要 把mega改成origin
+
+
+
+gerrit上搜索之前的提交：
+owner:self branch:master
+
+实体屏幕接线后显示但是无法点击：
+adb shell dumpsys car_service get-power-state
+如果提示 stand_by 就是表示 B34 和b35引脚接的有问题；
+如果是on，屏幕还是不行的话，需要找高兵看下。
+
+
+DMS指的是驾驶员的舱内视觉检测，OMS是指乘客的舱内视觉检测
+
+打开ssh的配置，可以配置北京和武汉的地址：
+vi ～/.ssh/config
+
+当前提交在gerrit上编译失败但不是自己代码的问题，是jenkis环境问题，需要重新编译的，在gerrit最下面，点击jenkis的链接，进去有trigger，就是重新编译。
+
+
+切换到项目根目录
+repo forall -c 
+
+已提交但是未合入的代码，可以通过这个回退多个提交。
+git rebase -i HEAD~4
+
+
+当一个分支A需要 把另一个分支B最近几次提交cp过来的时候，
+先确保两个分支都是干净的
+git pull --rebase
+git checkout B 
+git log --oneline -20
+8373f3a (HEAD -> master, mega/master, m/master) 二三排模式按键
+fee2e1e 信号调整
+d5b53f8 空调出风口
+e625124 空调吹风和加热
+6b0a3a9 智能模式
+3ba8a61 二排三排功能
+5f5ed6a (mega/mfg/samoa_hqx.1.2.1_20230306) 新增信号,ui调整
+f7462b3 删除讯飞语音依赖
+7023300 香氛功能
+2b97807 后除霜按钮功能
+e0af79a 座椅功能代码类型转换异常修复
+cdcba86 前后排座椅按摩
+0fb7628 (mega/sop/glacier_hqx.1.2.1_20230223, mega/feature/glacier_hqx.1.2.1_20230227, mega/demo/redwood_hqx.1.2.1_20230223, mega/demo/glacier_hqx.1.2.1_20230227, mega/demo/glacier_hqx.1.2.1_20230223) 后排屏座椅位置调节
+ff7c36f (mega/release/zion_hqx.1.2.1_20230220, mega/release/glacier_hqx.1.2.1_20230218, mega/dev_hqx.1.2.1) 修复风量按钮滑动不灵
+敏
+ad634d4 上下左右调节关联吹风模式
+f491abd ui按键状态调整
+9865fcb 修复bug
+7e21294 除霜按钮状态
+69e78e3 空调风量滑动偶发断触摸问题
+f5ad633 空调风量等按键触发空调开机
+
+
+然后：git checkout A
+git cherry-pick 8373f3a...f7462b3
+8373f3a分别是B最后一次提交，8373f3a...7023300就是B比A多的那几次提交
+
+然后 git status 检查一下本地可以保留，正常情况下，这时候已经提交上去了，然后执行：
+git push mega HEAD:refs/for/A
+然后在geerit上添加review
+
+
+
+remote couldn’t create file: Read-only file system
+adb-root
+adb disable-verity
+adb reboot
+adb root
+adb remount
+
+
+命令行抓取日志：
+adb shell
+logcat | grep Runtime
+
+
+
+在特定目录下，C*表示文件名是C开头的文件，都会被推入这个目录/data/user_de/0/com.mega.cert/cache/
+adb push C* /data/user_de/0/com.mega.cert/cache/
+
+
+删除目录后
+rm -rf log
+在操作界面，此时log不会生成文件夹，需要adb reboot后再重新操作ui再抓日志
+
+
+卸载apk：
+1、直接执行卸载
+1）查看包名：
+
+adb shell pm list packages
+
+2）指定包名卸载：
+
+adb uninstall {包名}
+
+2、获取root权限卸载
+方法1一般可能无法卸载，这时就需要获取root权限，删除指定文件下的apk。
+
+1）通过包名获取apk路径（包名地址）：
+
+adb shell pm path {包名}
+
+2）root权限：
+
+adb root
+
+3）读写权限
+
+adb remount
+
+4）删除apk：
+
+adb shell rm {包名地址}
+
+5）重启root：
+
+adb reboot
+
+3、shell卸载
+如果2方法还是无法卸载，就只能进入apk目录下进行删除了。
+
+1）获取root权限：
+
+执行2中（2）（3）方法
+
+2）进入shell：
+
+adb shell
+
+3）查看包名：
+
+pm list package
+
+4）获取路径：
+
+pm path {包名}
+
+5）进入apk所在目录
+
+cd /system/app/***
+
+6）彻底删除apk：
+
+rm -rf xxx.apk
+
+7）重启：
+
+reboot
+
+apk重签名：
+jarsigner -verbose -keystore XXXXX.keystore -signedjar notepad_signed.apk notepad.apk XXXX.keystore
+说明：
+1)jarsigner是工具名称，-verbose表示将签名过程中的详细信息打印出来；
+2)-keystore XXXXX.keystore 表示签名所使用的数字证书所在位置，没有写路径，表示文件在当前目录；
+3)-signedjar notepad_signed.apk notepad.apk 表示给notepad.apk文件签名，签名后的文件名称为notepad_signed.apk；
+4)最后面的XXXX.keystore 表示证书的别名，对应于生成数字证书时-alias参数后面的名称
+
+使用jarsigner对APK重签名，提示：jarsigner: 无法对 jar 进行签名: java.util.zip.ZipException: invalid entry compressed size (expected 41278 but got 42575
+bytes) bytes)
+最后解决办法是：把要重签名的apk后缀改成zip，打开后删除里面的META-INF目录，然后重新改成apk后缀
+
+
+网易云音乐的apk，我先把apk push 到vendor/app目录下，重启后，点击这个app会崩溃；但是我直接用 adb install apk 启动这个apk就不会崩溃
+解决办法：
+按照正常的集成apk的方式，集成到系统中，android.mk和device.mk都配置好，重启个版本，验证ok。
+
+
+公司的自己的网盘地址：
+https://mega-disk.megatronix.com/apps/files/?dir=/&fileid=480225  域账号
+
+信号表里的颜色标注：
+需要处理的信号统一修改成黄色；
+王锐把黄色的信号加入到Carservice以后，会改成绿色；
+上层应用开发调用信号，确认没问题，就把颜色去掉。
+
+
+git clone ssh://youchang.huang@git.i-tetris.com:29418/apps/gladius/android/chery/e0x/apk_prebuilts 
+apk_prebuilts里的Android.mk文件，
+LOCAL_VENDOR_MODULE := true 表示 apk将被放到 vendor 目录；
+没有写LOCAL_VENDOR_MODULE 或者 LOCAL_VENDOR_MODULE := false,会把apk放到system
+
+LOCAL_VENDOR_MODULE := true 表示apk将被放到 vendor/pri-app或者system/pri-app下
+LOCAL_VENDOR_MODULE不写或者LOCAL_VENDOR_MODULE := false,apk将被放到vendor/app或者system/app下
+
+配置 
+LOCAL_PRIVILEGED_MODULE := true  
+LOCAL_SYSTEM_EXT_MODULE := true 
+可以将apk配置到 /system/system_ext/priv-app 下
+
+还有其他配置可以把apk放到data下。
+在Android.mk通过设置LOCAL_CERTIFICATE实现。如：LOCAL_CERTIFICATE := platform即选择platform来签名。
+注：预置无源码的apk应用时，很多时候仍然使用原本第三方签名，LOCAL_CERTIFICATE := PRESIGNED。
+
+
+推ic_service步骤：
+
+adb root;adb remount
+adb push ic_service /sdcard
+adb shell
+cp /sdcard/ic_service /ota/ 
+telnet cdc-qnx
+root
+mv /usr/bin/ic_service /usr/bin/ic_service_bak
+cp /ota/android/ic_service /usr/bin/
+reset
+
+恢复：ic_service
+adb shell
+telnet cdc-qnx
+root
+mv /usr/bin/ic_service /usr/bin/ic_service_bad
+mv /usr/bin/ic_service_bak /usr/bin/ic_service   
+reset 
+
+
+推ais_vision_server步骤：
+
+adb root;adb remount
+adb push ais_vision_server /sdcard
+adb shell
+cp /sdcard/ais_vision_server /ota/ 
+telnet cdc-qnx
+root
+mv /usr/bin/ais_vision_server /usr/bin/ais_vision_server_bak
+cp /ota/android/ais_vision_server /usr/bin/
+reset
+
+恢复：ic_service
+adb shell
+telnet cdc-qnx
+root
+mv /usr/bin/ic_service /usr/bin/ic_service_bad
+mv /usr/bin/ic_service_bak /usr/bin/ic_service   
+reset 
+
+查看ic_service进程在不在
+ps -e | grep ic_  
+
+
+查看当前板子上window 有哪些
+adb shell dumpsys window windows > 1.txt
+在1.txt这个文件中，通过  Window #可以找到具体的包名
+
+adb shell am force-stop com.lion.media 可以杀掉这个包名对应的进程
+
+
+anr日志分析流程：
+
+1. watchdog: Blocked in handler on ActivityManager (ActivityManager)
+      说明ActivityManager这个线程被blocked了（ActivityManager是system_server的一个线程）
+
+  
+2. 查看ActivityManager线程的堆栈状态：
+  "ActivityManager" prio=5 tid=15 Blocked
+  at com.android.server.am.ActivityManagerService$MainHandler.handleMessage(ActivityManagerService.java:1784)
+  - waiting to lock <0x1a4c832a> (a com.android.server.am.ActivityManagerService) held by thread 61
+  该线程在等待锁<0x1a4c832a>，这个锁被thread 61所持有
+  
+3.查看thread 61的堆栈状态：
+   "Binder_5" prio=5 tid=61 Native
+  at android.app.IActivityController$Stub$Proxy.appCrashed(IActivityController.java:222)
+  at com.android.server.am.ActivityManagerService.crashApplication(ActivityManagerService.java:12297)
+  - locked <0x1a4c832a> (a com.android.server.am.ActivityManagerService)
+  at com.android.server.am.ActivityManagerService.handleApplicationCrashInner(ActivityManagerService.java:11838)
+  at com.android.server.am.ActivityManagerService.handleApplicationCrash(ActivityManagerService.java:11820)
+  这里可以看到tid=61的线程是AMS中的一个binder线程，而这个binder线程正在处理app crash，即在crashApplication方法中。由于
+  当前处于monkey测试状态，所以会进入ActivityController的appCrashed方法。大致猜测可能是monkey进程的appCrashed被blocked住了，所以
+  AMS的crashApplication方法也被blocked住了。
+  
+4，下面看一下monkey进程，搜一下“appCrashed”关键字，有如下log：
+    "Binder_3" prio=5 tid=13 Blocked
+  at com.android.commands.monkey.Monkey$ActivityController.appCrashed(Monkey.java:330)
+  - waiting to lock <0x12a7bb9b> (a com.android.commands.monkey.Monkey) held by thread 1
+  at android.app.IActivityController$Stub.onTransact(IActivityController.java:92)
+  at android.os.Binder.execTransact(Binder.java:446)
+   果不其然，appCrashed方法在等待锁<0x12a7bb9b>，而这个锁被thread 1锁持有。
+   
+5.看一下thread 1：
+   "main" prio=5 tid=1 Native
+  at libcore.io.BlockGuardOs.read(BlockGuardOs.java:230)
+  at libcore.io.IoBridge.read(IoBridge.java:512)
+  at java.io.FileInputStream.read(FileInputStream.java:177)
+  at java.io.InputStreamReader.read(InputStreamReader.java:231)
+  - locked <@addr=0x12c518a0> (a java.lang.ProcessManager$ProcessInputStream)
+  at java.io.BufferedReader.fillBuf(BufferedReader.java:145)
+  at java.io.BufferedReader.readLine(BufferedReader.java:397)
+  - locked <@addr=0x12c51ac0> (a java.io.InputStreamReader)
+  at com.android.commands.monkey.Monkey.commandLineReport(Monkey.java:458)
+  at com.android.commands.monkey.Monkey.getBugreport(Monkey.java:497)
+  at com.android.commands.monkey.Monkey.runMonkeyCycles(Monkey.java:1078)
+  看到这里我们就明白了，实际上是IO阻塞了。这里可以大致说一下：在monkey测试的时候，当遇到anr\app crash等异常
+  情况时，monkey会把这些异常情况写入文件中以供我们分析。monkey在写文件时，是调用“bugreport”这个shell命令来获取当前
+  系统各进程的各线程的堆栈情况和状态的，而bugreport会得到大量的信息，所以如果在monkey测试时连续遇到anr/crash，有可能会导致
+  这个写文件的过程很长，这样AMS通知monkey的appCrashed的方法就会被blocked住，进而导致AMS被blocked住。
+  
+
+注意：如果  "main" p 主线程日志里，没有出现 locked,sleep等线程的生命周期的字样，只出现了MessageQueue，说明是无效trace，这种trace属于发生anr后，没有抓到现场的。
+需要分析main log，找到anr，是actvity就往前倒推5秒，分析用户行为，看看能否找到猫腻；是Service就往前倒推10秒；BroadCast就往前倒推20秒看用户行为。
+
+无效trace的例子：
+"main" prio=5 tid=1 Native
+  | group="main" sCount=1 dsCount=0 flags=1 obj=0x72101338 self=0xb4000074ce1cd010
+  | sysTid=3588 nice=-10 cgrp=default sched=0/0 handle=0x7654b374f8
+  | state=S schedstat=( 24985187454 4197573928 36117 ) utm=647 stm=1850 core=0 HZ=100
+  | stack=0x7fe9052000-0x7fe9054000 stackSize=8192KB
+  | held mutexes=
+  native: #00 pc 000000000009c0b8  /apex/com.android.runtime/lib64/bionic/libc.so (__epoll_pwait+8)
+  native: #01 pc 0000000000019ad0  /system/lib64/libutils.so (android::Looper::pollInner(int)+184)
+  native: #02 pc 00000000000199b0  /system/lib64/libutils.so (android::Looper::pollOnce(int, int*, int*, void**)+112)
+  native: #03 pc 0000000000110f80  /system/lib64/libandroid_runtime.so (android::android_os_MessageQueue_nativePollOnce(_JNIEnv*, _jobject*, long, int)+44)
+  at android.os.MessageQueue.nativePollOnce(Native method)
+  at android.os.MessageQueue.next(MessageQueue.java:335)
+  at android.os.Looper.loop(Looper.java:183)
+  at java.lang.reflect.Method.invoke(Native method)
+  at com.android.internal.os.RuntimeInit$MethodAndArgsCaller.run(RuntimeInit.java:596)
+  at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:947)
+
+
+在android/log里，zgrep anr * 过滤出：
+logcat.log.086_1970_01_01_08_55_02.gz:01-01 08:54:29.526719   978  2926 I am_anr  : [0,3588,com.android.systemui,818462223,Input dispatching timed out (baa95ee BottomCarSystemBar (server) is not responding. Waited 5003ms for MotionEvent
+
+从日志logcat.log.086_1970_01_01_08_55_02.gz， is not responding  这里往前找秒，发现日志如下：
+
+01-01 08:54:24.118478   269   269 I lowmemorykiller: Reclaimed 0kB, cache(59120kB) and free(12176kB)-reserved(73732kB) below min(73728kB) for oom_adj 0
+01-01 08:54:24.118509   269   269 I lowmemorykiller: Suppressed 76 failed kill reports
+01-01 08:54:24.184827  2933  2945 V WRSOMEIP: Local: Ping from Client: [0x6872]
+--------- switch to events
+01-01 08:54:19.163578   407  3035 I liblog  : 59
+01-01 08:54:24.279495  1521  1556 I dvm_lock_sample: [com.mega.car,0,MessageProperty,204,MessageQueue.java,337,android.os.Message android.os.MessageQueue.next(),-,600,boolean android.os.MessageQueue.enqueueMessage(android.os.Message, long),40]
+--------- switch to main
+01-01 08:54:24.668544   442   454 E message_center: onReceive callback already died
+
+很明显，是内存不足。
+
+股份项目的逻辑是：
+MCU负责接入方控信号，识别按键按下，抬起的状态；
+QNX负责判断长按和短按，并封装键值，传给各个模块；
+Android和仪表负责接收键值并响应
+
+
+
+ubuntu 预览webp图片
+sudo add-apt-repository ppa:helkaluin/webp-pixbuf-loader
+sudo apt update
+sudo apt install webp-pixbuf-loader
+
+三方应用调用系统api，可能会调用不到，需要在
+AndroidManifest.xml加上  android:sharedUserId="android.uid.system"，配置成系统应用
+
+查看当前目录下，各个文件的大小：
+du -sh *
+
+adb shell wm density
+
+adb shell wm size
+
+seLinux权限问题，需要总结起来
+
+
+如果板子运行软件，无法debug，用cat /etc/version 看下软件是userdebug还是user版本。user版本无法debug。或者重启自己的电脑试试
+
+雄狮畅听需要配置车架号：调试方法
+adb shell am start -n com.lion.os.service/com.lion.os.service.activity.MainActivity
+Tsp平台信息 -> 右上角全部测试 ，返回 -> 点击 模拟测试开关 ，测试开，测试未到期，返回 -> 点击 车辆信息，输出车辆识别码 ，完成。
+
+设置车辆识别码：
+
+adb shell settings put global isTestMode 1
+adb shell settings put global isTestDev 1
+
+adb shell settings put global TestVin E03TEST8155000035
+adb shell settings put global TestSn FCOT23#E0300035#
+adb shell settings put global TestIccId 89860920703041500035
+
+可以看到有没有设置成功或者系统中有没有这个数据。
+adb shell settings  get global TestVin
+
+注意：给实车写入三码数据，注意不要执行adb root。 如果不确定是否执行过adb root,请先 adb reboot后，再写入数据。
+如果  执行adb root，再写入数据，数据很容易丢失。
+
+还有代码中通过provider写入settings的数据，都放在：/data/system/users/0/settings_global.xml 这个文件中，通过 cat settings_global.xml可以将xml打印出来。
+
+adb root后写入的数据，比如：adb shell settings put global TestVin E03TEST8155000035   其 package="root"，很容易丢失。
+
+MegaSettings监听值的变化：
+   MegaSettings.putIntForUserGlobal(null,"name",0,-1)
+        Settings.Global.getUriFor("name");
+        mContext.getContentResolver().registerContentObserver(Settings.System.getUriFor(DVR_RECORD_STATE), false, new ContentObserver() {
+            @Override
+            public void onChange(boolean selfChange) {
+                super.onChange(selfChange);
+            }
+
+
+查看所有配置字信息：
+adb shell getprop
+
+
+如果有遇到 弹窗需要 毛玻璃效果的，可以考虑继承这个：mega.blur.view.BlurDialog
+
+
+
+
+一般系统应用，system或者vendor下面的，都有权限在sdcard里读写。
+
+
+使用voy_ut工具，写三码数据到板子里：
+adb root;adb remount 
+adb push voy_ut /sdcard 
+
+adb shell
+
+ cp /sdcard/voy_ut /ota                                                                     
+telnet cdc-qnx
+login: root
+
+# cp /ota/android/voy_ut /data
+# chmod +x /data/voy_ut 
+
+# /data/voy_ut -w sn -p FCOT23#E0300035#   
+[VoyTee-UT] : <main> : <212> : parseOpt: 5, 0, 1
+# /data/voy_ut -r sn                     
+[VoyTee-UT] : <main> : <212> : parseOpt: 6, 0, 1
+fn:sn, data:FCOT23#E0300035#
+fn:sn, len:16
+
+46 43 4f 54 32 33 23 45 30 33 30 30 30 33 35 23 
+# /data/voy_ut -w vin -p E03TEST8155000035
+[VoyTee-UT] : <main> : <212> : parseOpt: 5, 0, 1
+# /data/voy_ut -r vin                      
+[VoyTee-UT] : <main> : <212> : parseOpt: 6, 0, 1
+fn:vin, data:E03TEST8155000035
+fn:vin, len:17
+
+-w后面是名字  -p 后面是数据
+
+提示一下: 安全存储区的特性：
+RPMB没开情况，OTA刷机存在安全存储空间不会被刷掉。qfil和fastboot会刷掉。
+
+RPMB没开情况，写到安全存储区，再开RPMB，安全存储区的数据会丢失！！！
+
+RPMB开启情况下，任何刷机都不会清除安全存储区数据。但无法使用安全启动。
+
+怎么判断安全存储区是否开启？
+Qnx侧输入下面指令
+QSEEComAPI_Sample -v smplap32 14 1
+然后输入2，返回0表示已经开启。
+
+实际体验下来：
+sn码写进去重新上下电不会丢失数据
+vin码重新上下电，丢失，王峰排查结果是重启时，vin码在mcu被重写了。
+张忠毅给出解决方案：
+msg_center_test -t uartrpc_svc/uds/req '~!b:0x030x010x000x0f0x010x0e0x800x2e0xf10x90 + 数据
+0xf10x90 + 数据内容， 用一个hex表示，比如'1' => 0x31
+字符和
+进制对照表：https://www.qqxiuzi.cn/bianma/ascii.htm
+如果写这个vin:
+E03TEST8155000035
+msg_center_test -t uartrpc_svc/uds/req '~!b:0x030x010x000x0f0x010x0e0x800x2e0xf10x900x450x300x330x540x450x530x540x380x310x350x350x300x300x300x300x330x35'
+
+
+
+和qnx侧新增topic，需要重新打carService推进去，重启后才能生效。
+
+
+systemui本地运行：
+ ./../../gradlew clean && ./../../gradlew :Redwood:RedwoodSystemUI:assembleDebug --info && adb root && adb remount && adb push ./build/outputs/apk/debug/RedwoodSystemUI.apk /system/system_ext/priv-app/RedwoodSystemUI/RedwoodSystemUI.apk && adb shell killall com.android.systemui
+
+
+查看依赖关系
+./../../gradlew -q Redwood:RedwoodSystemUI:dependencies
+
+
+提交apk的，cp到别的分支的时候，如果出现冲突，就要注意 cp过去的apk是否空掉
+
+可以看到分支合入了哪些代码：
+branch:release/redwood_hqx.1.2.1_20230410 status:merged
+
+
