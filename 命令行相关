@@ -132,6 +132,10 @@ send data success: {"extension":null,"relative":false,"time":0,"type":4194304,"u
 
 其中 DrivingInfo/DrivingModeOut  是信号，'{"extension":null,"relative":false,"time":0,"type":4194304,"unit":"","valid":true,"value":0}' 是值
 
+ui触发按钮，检查qnx是否收到信号：
+on -T ic_apps_t -u ic_apps /usr/bin/mega_ipc_sub -t "AC/Status/Front/Set"
+
+
 空调模拟发送信号：
 adb shell  msg_center_test -t Sensor/OutsideAirQuality  '{"value":10.5}'
 其中 Sensor/OutsideAirQuality 是信号，'{"value":10.5}' 是值。
@@ -829,6 +833,9 @@ seLinux权限问题，需要总结起来
 adb shell am start -n com.lion.os.service/com.lion.os.service.activity.MainActivity
 Tsp平台信息 -> 右上角全部测试 ，返回 -> 点击 模拟测试开关 ，测试开，测试未到期，返回 -> 点击 车辆信息，输出车辆识别码 ，完成。
 
+命令行开启ota升级页面：
+adb shell am start -n com.mega.ota.test/com.mega.ota.test.UpdateDialog
+
 设置车辆识别码：
 
 adb shell settings put global isTestMode 1
@@ -941,5 +948,158 @@ systemui本地运行：
 
 可以看到分支合入了哪些代码：
 branch:release/redwood_hqx.1.2.1_20230410 status:merged
+
+chmod a+x a.txt 意识是给所有用户，a.txt的执行权限。
+
+notepad安装
+sudo snap install notepad-plus-plus
+
+
+代码检查：
+java -jar ../../cores/modules/checkstyle/diff-checkstyle-v0.0.3.jar -c ../../cores/modules/checkstyle/megaos-java-checks.xml ./src
+
+
+警告：您正丢下1个提交未和任何分支关联：
+git branch  <新分支名> 41250fc
+通过这个命令行来创建新分支，并把这次提交上去。
+然后切换到你想提交的分支，执行 git cherry-pick 41250fc   
+然后在git push
+
+
+
+android5.0以后不允许隐示启动servcie或这广播，必须指定service类名。
+
+
+
+#!/bin/bash
+echo "@A20230314" | sudo -S bash vlan_chery.sh && python3 display_gui_chery.py
+
+
+
+adb exec-out cmd overlay enable com.mega.btphone.bright
+在蓝牙界面，可以看到能切换主题成功。说明配置的overlay.apk没问题。
+
+
+huangyouchang@huangyouchang:~$ uname -m
+x86_64
+
+查看apk签名：
+keytool -printcert -jarfile RedwoodSystemUI.apk
+
+
+工程模式写入avm，会导致外置功放的配置失效
+解决方案：Qnx 输入这个命令后重启 ecu_config_utility -c
+
+
+工程模式app，使用代码运行到板子上，点击 日志导出，报错：
+java.lang.UnsatisfiedLinkError: dlopen failed: library "/system/lib64/libMegaLogger.so" needed or dlopened by "/apex/com.android.art/lib64/libnativeloader.so" is not accessible for the namespace "classloader-namespace"
+        at java.lang.Runtime.loadLibrary0(Runtime.java:1087)
+        at java.lang.Runtime.loadLibrary0(Runtime.java:1008)
+        at java.lang.System.loadLibrary(System.java:1664)
+恢复出厂设置后，再点击日志导出，正常。感觉和代码运行有关系。        
+
+
+过滤日志：
+logcat | grep AndroidRuntime   
+
+
+修改设备分辨率：
+adb shell wm size 2560x1440
+设置density
+adb shell wm density 240
+
+
+adb shell logcat | grep BCM_MFS_Swt  一定要注意大小写，后面的过滤条件要跟矩阵表的一致。
+
+logcat | grep SomeIp 过滤someip信号
+
+要想信号可以收到连续值，请在topic上做如下配置：
+   @PropertyDefine(
+            subscribe = "DMS/QnxHealthMessage",
+            type = String.class,
+            changeMode = CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_CONTINUOUS
+    )
+
+
+媒体测试：
+adb shell am start -n com.mega.audiotesttools/.MainActivity
+
+git branch -vv 查看本地分支指向的远端分支是啥
+
+git branch -d 分支名 删除分支，前提是本地要切换到这个分支以外的分支
+
+Ubuntu下安装adb和fastboot方法如下：
+
+sudo apt-get update
+sudo apt-get install android-tools-adb 
+sudo apt-get install android-tools-fastboot
+
+
+fastboot 模式下快速刷机
+
+$ adb root
+$ adb shell
+$ telnet cdc-qnx
+$ root
+
+执行脚本，进入9008模式(fastboot模式)：
+# enter_fastoot_mode.sh
+在 /qfi_bin/common/build 目录下执行终端：
+python3 fastboot_complete.py --pf=8155_la --st=ufs
+
+上面刷机脚本执行完以后，系统不会自动重启，需要执行reboot命令：
+ fastboot reboot
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
