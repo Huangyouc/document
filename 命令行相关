@@ -1607,9 +1607,11 @@ private Observer<Slice> mSliceObserver = new Observer<Slice>() {
 查看某个apk版本：
 adb shell "dumpsys package com.mega.carsettings |grep versionName"
 
-单个线程的CPU：
+单个进程的CPU/内存：
 adb shell
 top -H -p pid(top 可以看应用的pid)
+
+adb shell top 查看所有CPU/内存
 
 
 adb shell
@@ -2312,6 +2314,16 @@ RW-41740
 请对手件排查，为什么这么短的时间内，分别上报了1和0. 
 正常情况下，上报1后，要隔一段时间才会上报0.
 (不排除ICC接到1后，信号阻塞了，导致和0一起上报给了应用层)
+
+遇到弹框文案不随着语言切换而变化的，可能是因为布局文件里的string，layout加载后有缓存。可以在代码里动态 settext 解决
+
+高配地图的uuid读的someip，中配是写入的
+中配写入uuid：
+写入uuid: 0123456789012345678
+msg_center_test -t uartrpc_svc/fact_test/req  '~!b:0x0c0x1e0x010xa00xc40x0f0x140x580x300x310x320x330x340x350x360x370x380x390x300x310x320x330x340x350x360x370x38'
+
+高配中配读的是 自动驾驶控制中心  这个配置字
+0是低配，1中中配，2是高配
 
 
 国际的版本，讯飞语音不支持播放中文。
