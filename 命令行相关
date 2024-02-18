@@ -845,6 +845,9 @@ seLinux权限问题，需要总结起来
 adb shell am start -n com.lion.os.service/com.lion.os.service.activity.MainActivity
 Tsp平台信息 -> 右上角全部测试 ，返回 -> 点击 模拟测试开关 ，测试开，测试未到期，返回 -> 点击 车辆信息，输出车辆识别码 ，完成。
 
+adb shell settings put  global persist.sys.lion.sim.active 1
+个人中心激活
+
 命令行开启ota升级页面：
 adb shell am start -n com.mega.ota.test/com.mega.ota.test.UpdateDialog
 
@@ -1408,7 +1411,7 @@ carsetting的国际分支 feature/kirkwood_hqx.1.2.1_20231031
 IS_REEV = TextUtils.equals(carEngine,"reev_can");
 
 纵置增程：feature/redwood_hqx.1.2.1_20231115  配置字： 驱动动力形式;00,纯电动;01,增程
-
+纵置增程和主线一样，使用someip
 
 空调语音处理，会有此日志：
  (HvacVoiceManager.java:43)#handlerOperation ]handlerOperation = {"mode":"座椅加热","name":"座椅","mNameValue":{"direct":"+","offset":"3","ref":"ZERO","type":"SPOT"},"operation":"SET","mService":"carControl","mUser":"2"}
@@ -1964,6 +1967,10 @@ emulator-5554 device
 
 $ adb -s emulator-5554 shell
 
+远程拉文件
+scp -r matrix@10.57.1.168:~/eric0115/tmp ./localdir
+scp -r matrix@10.57.1.168:~/0118/perf_set18.data .
+
 问题：后排黑屏，日志找到：
 ActivityManager: Process com.mega.redwoodhvac.behindscreen (pid 5103) has died: vis+2 TOP 
 找到：
@@ -2170,10 +2177,43 @@ sudo apt install gvfs-backends
 
 应用被杀死，参考http://52.80.87.177:8080/browse/CRW-19990 的分析思路。
 
+副驾安全气囊开关回弹
+http://jira.i-tetris.com/browse/RW-38050
+http://52.80.87.177:8080/browse/CRW-17960
+
+车机手机遗忘不提醒
+内部：http://jira.i-tetris.com/browse/RW-37470
+外部：http://52.80.87.177:8080/browse/CRW-17571
+对手件没有上报信号
+
+【实车】车窗控制偶发回弹
+内部：http://jira.i-tetris.com/browse/RW-30697
+外部：http://52.80.87.177:8080/browse/RW-37205
+vcc处理的问题
+
+
+语音控制主驾座椅加热1档，中控屏主驾座椅加热界面显示识别成功后从1档自动跳至2档
+http://jira.i-tetris.com/browse/RW-38082
+语音执行：座椅加热1档，ICC信号发送正常，对手件回复正常；
+语音执行：座椅加热2档，ICC信号发送正常，对手件先回复2，后回复1，有问题，需要对手件排查。
+另外，icc每帧有效值后面跟了一帧无效值00，为啥对手件在还没有接收到00无效值的时候，就回复了呢？
+
 
 语音切换中英文模式中控出现1-3秒黑屏
 http://jira.i-tetris.com/browse/RW-41629
 
+已经开启语音的情况下，不再发送start
+http://jira.i-tetris.com/browse/RW-36567
+
+
+电动副仪表板点击后，不执行动作
+http://jira.i-tetris.com/browse/RW-39166
+ICC发送和接收到都是正常的，表明ICC信号下发和接收都ok。至于仪表板为啥没有移动，请对手件排查。
+
+点击电动副仪表板向前，副仪表板向前一段后又回退
+http://jira.i-tetris.com/browse/RW-38830
+从pcap日志上看，点击向上按钮，信号正常的发送和接收了。
+至于为啥副仪表板行为异常，需要对手件看下。
 
 开启动态氛围灯，实车有动效，但UI显示无动效
 内部：http://jira.i-tetris.com/browse/RW-32402
@@ -2182,6 +2222,50 @@ http://jira.i-tetris.com/browse/RW-41629
 第一消耗cpu和内存，第二很难做到动画和实车保持一致.
 故 此功能暂不做实现。
 
+上电后，走完迎宾流程，在6秒左右，会发消息  RESTORE_SAVED_LIGHT_STATUS:
+                //恢复氛围灯之前的状态
+                initAtmosphereLight();
+关闭电源后，commonservice会调用会根据电源信号为0，走设防熄灭氛围灯sendAmbArming
+本问题出现原因 ：下电设防后（会关闭氛围灯），然后氛围灯迎宾流程走完后，会走恢复下电前氛围灯状态，如果下电前氛围灯是开启的，会开启氛围灯。
+解决方案：氛围灯迎宾流程走完后，判断当前电源状态，如果已经下电，则不在走恢复氛围灯逻辑。
+       
+       
+实车颜色变化很多，如果ui上跟随实车变化的话，需要很多帧动画去实现。
+第一消耗cpu和内存，第二很难做到动画和实车保持一致.
+故 此功能暂不做实现。
+内部：http://jira.i-tetris.com/browse/RW-32402
+外部：http://52.80.87.177:8080/browse/RW-37663 
+
+【原因】在氛围灯界面，说打开氛围灯，结果触发了左边菜单栏的可见即可说，没有走语义。
+【解决】屏蔽菜单栏的氛围灯的可见即可说
+【验证】在sop分支20240122版本验证
+内部：http://jira.i-tetris.com/browse/RW-48378
+外部：http://52.80.87.177:8080/browse/RW-61149
+
+语音控制关闭氛围灯无效
+为啥说走到了可见即可说，但是实际上并没有走 switch的点击事件
+内部：http://jira.i-tetris.com/browse/RW-48378
+外部：http://52.80.87.177:8080/browse/RW-61149
+
+刷卡上电后：
+偶现动态氛围灯开关关闭状态，实际开启
+内部：http://jira.i-tetris.com/browse/RW-47792
+外部：http://52.80.87.177:8080/browse/RW-60450
+
+
+
+     
+0y双色氛围灯：1 4 6 9 10     和  3  7 8  13 是两种颜色      
+
+
+车机上电，动态氛围灯流程：
+开始走迎宾功能：
+WELCOME_LIGHT_STEP_1 标志："AmbLigFlngModSel":6
+WELCOME_LIGHT_STEP_2 标志 只有 AmbLig14Authn值为1，其他全是0
+WELCOME_LIGHT_STEP_3 标志  4 6 7 9 12  14 id为1，亮度100，颜色36
+WELCOME_LIGHT_STEP_4 标志  4 6 7 9 12  14 id为1，亮度0，颜色36    
+然后恢复氛围灯之前的状态
+RESTORE_SAVED_LIGHT_STATUS         
 
 ANR的bug单子分析：
 ANR报告：http://xmmp-wh.i-tetris.com/#/task/taskList?projectId=1685427863&taskId=16564&type=0&page=detail&jobGuid=f5a0426885d3468382f58e2124bd5fb9&taskTab=anr&version=V1.2.127.0-20231206033617&package=com.mega.redwoodhvac.behindscreen
@@ -2260,7 +2344,9 @@ https://www.jianshu.com/p/4321d4780629
 先dump内存文件：adb shell am dumpheap com.demo.micolauncher /data/local/tmp/test.hprof，将test.hprof下载到本地
 执行：hprof-conv test.hprof converted-test.hprof
 使用MemoryAnalyzer 打开 converted-test.hprof
-没怎么使用。
+
+
+和指令 simpleperf record -g -o /data/local/tmp/perf_vehicle.data --duration 30 -p pid 一起使用，分析cpu
 
 
 https://mp.weixin.qq.com/s?__biz=MzA5MzI3NjE2MA==&mid=2650263744&idx=1&sn=b67717ba614ebcb64aeaa05a23aa401a&chksm=886321afbf14a8b9ab38b86f913cb975bc0eb609e09be065802d024521b142a97bc71762b67b&scene=27
