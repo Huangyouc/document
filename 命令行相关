@@ -77,6 +77,7 @@ sudo bash vlan_chery.sh
 最后在 someip_case目录下，执行  python3 display_gui.py  即可启动工具。
 
 
+ota升级包放在 com.mega.update，插上后自动拷贝升级
 
 adb remount
 
@@ -379,15 +380,35 @@ T1E切换usb模式和adb模式：
 本地设置 ，系统tab的右下角，多次点击，弹出工程模式，可以进行adb和usb切换
 
 切换到adb模式下，怎么抓日志？
+
 USER版本开root的方法：
-1.telnet cdc-qnx（先输root ，再输入密码@mega#cdc!)
+1.telnet cdc-qnx
+root
+root@mega#cdc!
 2.touch persist/enable_dbg
 3.reset
 关闭android root权限步骤
-1.telnet cdc-qnx（先输root ，再输入密码@mega#cdc!)
+1.telnet cdc-qnx（输root +密码@mega#cdc!)
 2.rm persist/enable_dbg
 3.reset
 大家记得打开了不用的话要关掉，尤其是在客户现场使用尤其注意
+
+
+遇到：telnet: connect: Message too long
+输入：setenforce 0   就行
+
+
+1、不接以太网盒子，不会触发心跳重启检测；
+2、接了以太网盒子，必须按照以太网物理层配置一个vcc的配置，步骤如下：
+sudo ip link set dev 网卡 down
+sudo ip link set dev 网卡 address 02:51:52:00:00:07
+sudo ip link set dev 网卡 up
+sudo ip link add link 网卡 name enx.62 type vlan id 62
+sudo ifconfig enx.62 192.168.62.7/24 broadcast 192.168.62.255 up
+3、·在qnx禁用vcc检测
+touch /persist/disable_vcc
+以上三种方式都可以解决这个问题
+
 
 用这个方式可以通过ADB将log取出去：
 拉取到自己电脑指定目录：
@@ -829,6 +850,12 @@ sudo apt install webp-pixbuf-loader
 三方应用调用系统api，可能会调用不到，需要在
 AndroidManifest.xml加上  android:sharedUserId="android.uid.system"，配置成系统应用
 
+如果install的应用，和系统中内置的相同包名的应用的sharedUserId不一样，会存在装不上的情况install_failed_shared_user_incompatible
+需要先手动卸载 系统里内置的apk
+adb shell pm path com.mega.redwoodautolinetest
+看下路径在哪里, 然后删除这个路径下的apk,adb reboot, 然后在 adb install
+
+
 查看当前目录下，各个文件的大小：
 du -sh *
 
@@ -1042,6 +1069,13 @@ logcat | grep SomeIp 过滤someip信号
 
 媒体测试：
 adb shell am start -n com.mega.audiotesttools/.MainActivity
+adb shell am start -n com.mega.redwoodautolinetest/autolinetest.ui.activity.AutoLineMainActivity
+adb shell am start -n com.mega.redwoodautolinetest/com.autolinetest.ui.activity.StaticAgingTest2Activity
+命令行和u盘都可以拉起EOL app
+1.命令行：
+adb shell am start -n com.mega.redwoodautolinetest/autolinetest.ui.activity.AutoLineMainActivity
+2.u盘拉起，需要在u盘里新建文件夹：AutoEOLtest，然后系统版本要2月23号以后的版本
+
 
 git branch -vv 查看本地分支指向的远端分支是啥
 
@@ -1098,9 +1132,8 @@ ifshefei
 
 
 
-
-bug统计面板：
-http://jira.i-tetris.com/secure/Dashboard.jspa?selectPageId=13050
+后台看到车型等信息：
+mega.chery.tsp.RegisterVidController
 
 
 
@@ -1258,24 +1291,6 @@ adb shell am start -n com.mega.ota.test/com.mega.ota.test.UpdateDialog
 
 
 
-USER版本开root的方法：
-1.telnet cdc-qnx（输root +密码@mega#cdc!)
-2.touch persist/enable_dbg
-3.reset
-关闭android root权限步骤
-1.telnet cdc-qnx（输root +密码@mega#cdc!)
-2.rm persist/enable_dbg
-3.reset
-大家记得打开了不用的话要关掉，尤其是在客户现场使用尤其注意
-
-
-
-
-
-
-
-
-
 
 
 蓝牙协议的问题，需要罗能强看下
@@ -1337,7 +1352,7 @@ grep -rn "abcd"  可以从当前目录中过滤出abcd字段。
 查看某个app的version：
 adb shell pm dump com.lion.media |grep -i "version"
 
-
+user版本强制安装apk
 安装apk，可以使用 adb isntall -r -t apk
 
 
@@ -1536,7 +1551,12 @@ https://blog.csdn.net/wds1181977/article/details/45914489
 Jira-Id: RW-35730            
                    
                    
-e0y 副驾座椅电动调节：为 0 1 2 时，只显示位置，没有腿托为3时，有腿托 。    
+e0y 副驾座椅电动调节：为 0 1 2 时，只显示位置，没有腿托为3时，有腿托 。  
+
+
+打开方向盘调节后点击空白处退出，滑动方控键仍可调节方向盘
+RW-58885
+在3.14已经修复。请使用3.15以后的版本验证  
 
    
 
@@ -1667,12 +1687,73 @@ Total allocated by GraphicBufferAllocator (estimate): 229048.00 KB
 adb shell am dumpheap 包名
 然后把文件改成.hprof丢到AS里去看内存泄漏情况
 
+adb shell dumpsys meminfo com.mega.carsettings  查看内存情况   主要看下 TOTAL PSS:
+Applications Memory Usage (in Kilobytes):
+Uptime: 75224 Realtime: 75224
+
+** MEMINFO in pid 2450 [com.mega.carsettings] **
+                   Pss  Private  Private     Swap      Rss     Heap     Heap     Heap
+                 Total    Dirty    Clean    Dirty    Total     Size    Alloc     Free
+                ------   ------   ------   ------   ------   ------   ------   ------
+  Native Heap   122640   122608        0        0   125672   134584   122553     7315
+  Dalvik Heap     9122     9060        0        0    13272    19116     9558     9558
+ Dalvik Other     6480     4548        0        0     8908                           
+        Stack     2396     2396        0        0     2404                           
+       Ashmem        4        0        0        0       20                           
+    Other dev      126        0      124        0      456                           
+     .so mmap    60610    21280    29528        0   116116                           
+    .jar mmap     1663        0       64        0    33460                           
+    .apk mmap    25985      356    19744        0    61104                           
+    .ttf mmap      103        0        0        0      440                           
+    .dex mmap       93        4        0        0      388                           
+    .oat mmap       27        0        0        0     2224                           
+    .art mmap     7990     7784       12        0    20156                           
+   Other mmap   283045   124852   156152        0   287856                           
+      Unknown    52996    52992        0        0    53616                           
+        TOTAL   573280   345880   205624        0   573280   153700   132111    16873
+ 
+ App Summary
+                       Pss(KB)                        Rss(KB)
+                        ------                         ------
+           Java Heap:    16856                          33428
+         Native Heap:   122608                         125672
+                Code:    71004                         217720
+               Stack:     2396                           2404
+            Graphics:        0                              0
+       Private Other:   338640
+              System:    21776
+             Unknown:                                  346868
+ 
+           TOTAL PSS:   573280            TOTAL RSS:   726092      TOTAL SWAP (KB):        0
+ 
+ Objects
+               Views:      402         ViewRootImpl:        1
+         AppContexts:        9           Activities:        2
+              Assets:        7        AssetManagers:        0
+       Local Binders:      116        Proxy Binders:       79
+       Parcel memory:       18         Parcel count:       75
+    Death Recipients:       28      OpenSSL Sockets:        0
+            WebViews:        0
+ 
+ SQL
+         MEMORY_USED:        0
+  PAGECACHE_OVERFLOW:        0          MALLOC_SIZE:        0
+
+
+
+
 
 
 MegaLinkManager找 罗红杰
 
 如果底层信号有问题或者延迟，问下 CBS张超
 
+
+高斯模糊弹框导致的surface耗尽：
+http://jira.i-tetris.com/browse/RW-53301
+http://jira.i-tetris.com/browse/RW-52092
+解决方案： 弹框判断当前按是否是压测，是的话，不弹这个弹框。
+日志中搜索 animation-leash 或者 Layer可以看到信息。
 
 
 
@@ -1713,6 +1794,12 @@ hreadedRenderer.setStopped
 id: 3663, tid: 5926, name: UnityMain >>> com.mega.redwoodhvac <<<
 和RW-49998 重复，本单关闭。
 
+修改动态氛围灯为流光，重启车机后选项变为关闭
+内部：http://jira.i-tetris.com/browse/RW-52859
+外部：http://52.80.87.177:8080/browse/RW-64316
+需求里说，下电时，要把 动态氛围灯关闭。下次重新上电，会使用最后一次的动态氛围灯的状态，也就是关闭状态
+
+
 关闭氛围灯，大屏重启后氛围灯开关保持关闭，但是车内氛围灯带是点亮状态
 http://jira.i-tetris.com/browse/RW-33937
 
@@ -1733,6 +1820,11 @@ logcat.log.016_2024_01_18_09_22_01.gz:01-18 09:21:12.274159 26919 26919 D Atmosp
 语音控制关闭氛围灯无效
 内部：http://jira.i-tetris.com/browse/RW-48378
 外部：http://52.80.87.177:8080/browse/RW-61149
+
+此回调的线程和正常的 CheryMediaControl 线程不一样，应该是重启时，CheryMediaControl 销毁的时候，没有解注册LionMediaSysThirdCallback，导致重启之前的LionMediaSysThirdCallback对象一直存在。
+解决方案：重启时解注册 LionMediaSysThirdCallback。
+内部：http://jira.i-tetris.com/browse/RW-51278
+外部：http://52.80.87.177:8080/browse/RW-63083
 
 
 内存和cpu都不紧张，ui上未做耗时操作，但是input事件超时，需要到qnx日志查看肯恩的内存泄漏，比如此单
@@ -1808,6 +1900,8 @@ someip.messageid ==0xA4018004
 从pcap里看到，上报的确实是副驾驶车门开，没有上报主驾车门开。
 
 
+进入应用界面后发现会闪屏，此时要如何定位是否是relaunch activity引起的闪屏呢
+https://blog.csdn.net/wds1181977/article/details/45914489
 
 
 内置功放配置字命令：
@@ -1821,6 +1915,10 @@ e0y配置字命令：
 adb shell am start -n com.mega.engineeringmode/.function.offlineconfiguration.OfflineConfigurationActivity --ei car_mode 1
 eh3配置字命令：
 adb shell am start -n com.mega.engineeringmode/.function.offlineconfiguration.OfflineConfigurationActivity --ei car_mode 2
+两个参数一起改：
+adb shell am start -n com.mega.engineeringmode/.function.offlineconfiguration.OfflineConfigurationActivity --ei eamp_value 1 --ei car_mode 1
+adb shell am start -n com.mega.engineeringmode/.function.offlineconfiguration.OfflineConfigurationActivity --ei eamp_value 1 --ei car_mode 1 --ei high_performance 0
+
 
 
 有E2E保护的someip数据，看最后一位
@@ -1894,7 +1992,8 @@ http://jira.i-tetris.com/browse/RW-40088
 内部：http://jira.i-tetris.com/browse/RW-37922
 外部：http://52.80.87.177:8080/browse/RW-38776
 
-
+动态氛围灯流光状态，无极调色时也要给动态氛围灯传颜色值
+RW-59217
 
 
 
@@ -1994,6 +2093,15 @@ hud模式设置topic：HUD/HUDDisplayMode
 12-25 13:30:44.657280   595   671 E system_monitor:    498 system       -3   0  12G 913M  65M S 53.5   8.8 3197:57.19 surfaceflinger
 
 
+
+当前编译的是debug版本
+Release版本编译不通过Module was compiled with an incompatible version of Kotlin. The binary version of its metadata is 1.8.0, expected version is 1.6.0
+请修改代码，使Release版本可以编译通过
+编译命令如：
+./gradlew Amberex:AmberexAccount:assembleRelease -Dlint.baselines.continue=true
+huangyouchang@huangyouchang:~/workspace/redwood$ ./gradlew redwood:RedwoodCarSettings:assembleRelease -Dlint.baselines.continue=true
+                                                                   
+./gradlew assembleRelease -Dlint.baselines.continue=true
 
 
 
@@ -2125,10 +2233,22 @@ RW-41423
 外部：http://52.80.87.177:8080/browse/CRW-17877
 
 
+点击抬头显示自动按钮后更换挡位调节失败后按钮无法点击
+RW-57735
+切换档位后，会触发自动按钮的判断条件：
+档位不能是R档，车速不能大于10,电源模式是D1,DMS摄像头处于开。
+以上四个条件都满足才能点击自动按钮。
+当前日志无法判断这四个条件是否满足。请重新提供android日志。
+
+
+
+
 可见即可说，没有反应，可以通过日志检索：AppStatusManager 查看viewCmd 里有没有 view的文本
 2024-01-03 15:40:43.676  1805-2501  AppStatusManager        com...ytek.cutefly.speechclient.hmi  D  last_status is :{"viewCmd::default":{"data":{"hotInfo":{"viewCmd":"主界面|星途|你好星途|智能模式|扫风|assistNameacwinddriveropen|切至后排|assistNameacpanelrearrow|扫风|assistNameacwindcopilotopen|吹窗|吹脚|吹面|AUTO|自动模式|快速取暖|内外循环|空气净化|前除霜|后除霜|方向盘加热|assistNameacpanelfrontrowventisp|香氛|SYNC|温区同步|OFF|OFF|173****9964|Keyboard|0340|PM|成长进度|设置"}},"activeStatus":"bg","sceneStatus":"default"},"cmd::default":{"data":{},"activeStatus":"fg","sceneStatus":"default"}}
 
-
+比如喊氛围灯，
+讯飞语音会打印 ActionPresenter: performAction() action:Action [type=1004, keyword=氛围灯 
+这样的日志。如果没有，说明讯飞语音没过来。
 
 
 
@@ -2192,6 +2312,16 @@ http://52.80.87.177:8080/browse/CRW-17960
 vcc处理的问题
 
 
+http://jira.i-tetris.com/browse/RW-56396
+【E0Y】【生产车】【车辆设置】开的钥匙都不同步到大屏，即使显示了，样式也有问题
+
+驾座椅调节界面没有当前位置的那个小图标（无进度状态显示）
+http://jira.i-tetris.com/browse/RW-57859
+
+[SWP4][系统设置]显示模式设置默认改为深色模式
+http://jira.i-tetris.com/browse/RW-57659
+http://jira.i-tetris.com/browse/RW-57757
+
 语音控制主驾座椅加热1档，中控屏主驾座椅加热界面显示识别成功后从1档自动跳至2档
 http://jira.i-tetris.com/browse/RW-38082
 语音执行：座椅加热1档，ICC信号发送正常，对手件回复正常；
@@ -2220,7 +2350,7 @@ http://jira.i-tetris.com/browse/RW-38830
 外部：http://52.80.87.177:8080/browse/RW-37663
 实车颜色变化很多，如果ui上跟随实车变化的话，需要很多帧动画去实现。
 第一消耗cpu和内存，第二很难做到动画和实车保持一致.
-故 此功能暂不做实现。
+故 此功能不做实现。
 
 上电后，走完迎宾流程，在6秒左右，会发消息  RESTORE_SAVED_LIGHT_STATUS:
                 //恢复氛围灯之前的状态
@@ -2247,6 +2377,19 @@ http://jira.i-tetris.com/browse/RW-38830
 内部：http://jira.i-tetris.com/browse/RW-48378
 外部：http://52.80.87.177:8080/browse/RW-61149
 
+
+氛围灯设置为流光时氛围灯无动态效果,还是静态：
+内部：http://jira.i-tetris.com/browse/RW-59361
+外部：http://52.80.87.177:8080/browse/RW-68031
+从pcap报文看，ICC已经外发了流光的值：16
+实车氛围灯为什么没有表现出流光的状态，需求氛围灯看下。
+
+
+拨杆灯光设置无法触发灯光弹框
+http://jira.i-tetris.com/browse/RW-59319
+根据需求，开启闪光灯或者开启远光灯，才会触发这个弹框
+
+
 刷卡上电后：
 偶现动态氛围灯开关关闭状态，实际开启
 内部：http://jira.i-tetris.com/browse/RW-47792
@@ -2255,7 +2398,7 @@ http://jira.i-tetris.com/browse/RW-38830
 
 
      
-0y双色氛围灯：1 4 6 9 10     和  3  7 8  13 是两种颜色      
+0y双色氛围灯：1 4 6 9 10     和  3  7 8  12 13 是两种颜色        1 4 6 9 10（上光源） 3  7 8  12 13(下光源)
 
 
 车机上电，动态氛围灯流程：
@@ -2265,7 +2408,17 @@ WELCOME_LIGHT_STEP_2 标志 只有 AmbLig14Authn值为1，其他全是0
 WELCOME_LIGHT_STEP_3 标志  4 6 7 9 12  14 id为1，亮度100，颜色36
 WELCOME_LIGHT_STEP_4 标志  4 6 7 9 12  14 id为1，亮度0，颜色36    
 然后恢复氛围灯之前的状态
-RESTORE_SAVED_LIGHT_STATUS         
+RESTORE_SAVED_LIGHT_STATUS  
+
+
+车辆设置-氛围灯-动态氛围灯任意选择效果，重启后不记忆选择  ，动态氛围灯模式处于关闭状态
+http://jira.i-tetris.com/browse/RW-56509
+从需求上看，挡位从P档变为非P档时，动态氛围灯需要切换到关闭。
+重新上电，信号监听档位，就是有个非P档的信号跳变，需要将动态氛围灯切换到关闭状态。
+此处是需求的正常实现，非问题。
+可以试试，在P档时，切换到呼吸，然后重启查看，肯定还是在呼吸状态的。
+
+
 
 ANR的bug单子分析：
 ANR报告：http://xmmp-wh.i-tetris.com/#/task/taskList?projectId=1685427863&taskId=16564&type=0&page=detail&jobGuid=f5a0426885d3468382f58e2124bd5fb9&taskTab=anr&version=V1.2.127.0-20231206033617&package=com.mega.redwoodhvac.behindscreen
@@ -2332,6 +2485,18 @@ A4038004
     DOOR_RL(EntryLocks.ID_DOOR, REAR_LEFT),
 
     DOOR_RR(EntryLocks.ID_DOOR, REAR_RIGHT),
+    
+    
+0128 未显示HUD高度自动开关  RW-57400
+经过和陶洪杰金龙 电话沟通，0223分支也就是e03 ota分支，保留高度自动调节按钮；0128 也就是e0y的 ota分支，隐藏 高度自动调节按钮。
+
+系统setting属性写入，立刻断电，会出现写入失败的情况。
+据说可以通过   Runtime.getRuntime().exec("sync");，强制写入，但是不知道会引起什么未知问题
+实车不存在立刻断电的情况，建议不修改。
+
+
+PHEV拖车模式开关按钮回弹 RW-57563
+
 
 
 
@@ -2358,6 +2523,9 @@ Native Size: 此类总共使用的原生内存总量（只有android7.0+设备�
 Shallow Size: 此类使用的java内存总量（单位字节）
 Retained Size: 此类实例对象仍存活而保留的内存总大小（单位字节）
 
+去掉按键音：
+android:soundEffectsEnabled="false"
+
 
 http://52.80.87.177:8080/browse/RW-61980
 数字钥匙点击解冻，云端冻结，icc再点击解冻，由于icc连续两次点击同样的卡片的冻结，VCC处理的逻辑认为短时间内相同信号会被抛弃，不进行处理。
@@ -2377,8 +2545,50 @@ http://52.80.87.177:8080/browse/RW-61980
         // 为true，就是给文件Constant.FILE_PATH_UNITY 777的权限（所有用户）
         
 车辆设置性能优化task  http://jira.i-tetris.com/browse/RW-41366
+
+
+ Unable to get provider com.mega.carsettings.provider.SequoiaBrightnessSliceProvider: java.lang.SecurityException: Failed to find PID 2405
+ http://jira.i-tetris.com/browse/RW-52996
+参考：https://blog.csdn.net/lanmengfenghe/article/details/105162939
+
+
+[台架]压测，发送Enh_SeatSW_FL.notifySeatNeedMemory=1,没有显示主驾座椅调节的弹框
+http://jira.i-tetris.com/browse/RW-57915  
+当发1,此时车辆设置 处于 方向盘电动调节弹框、后视镜电动调节弹框、座椅调节界面 这三个页面其中之一，则不会弹出主驾座椅记忆的弹框。
+自动测试脚本会后续会再发一次1,但是Carservice的这个信号，必须是跳变后才会上报给应用层，导致后续的1无法传递给应用层，所以车辆设置后续也无法弹出主驾座椅记忆的弹框。
+
+
+
+在桌面语音关闭氛围灯，在进入车辆设置APP氛围灯页面实车氛围灯会自动在开启，页面开关为关闭状态(之前开启了音乐律动)
+RW-57752
         
-        
+无极调色氛围的后实车氛围灯颜色与中控氛围的内不一致
+http://jira.i-tetris.com/browse/RW-58769   
+动态氛围灯开启状态，无极调色不作用于动态氛围灯。
+此处是正常需求实现，非问题。
+可以尝试，把动态氛围灯关闭后，再拖动 无极调色。
+
+全词匹配处理，前后加&符号,比如氛围灯的处理：
+内部：http://jira.i-tetris.com/browse/RW-61440
+外部：http://52.80.87.177:8080/browse/RW-69196
+文本用：<string name="menu_atmosphere">氛围灯</string>
+可见即可说用：  <string name="menu_atmosphere_content_description">&amp;氛围灯&amp;</string>
+但是上面这个方案，实时下来，不行，已转语音组处理。
+
+调节氛围灯亮度高低无任何反应
+内部：http://jira.i-tetris.com/browse/RW-59253
+外部：http://52.80.87.177:8080/browse/RW-67970
+当前处于音乐律动模式。按照需求，音乐律动模式下，不能调整亮度
+
+
+
+e03的动态氛围灯只有关闭和律动选项，按照需求是 关闭/静态/呼吸/流光模式。原因：选中了音乐律动。
+内部：http://jira.i-tetris.com/browse/RW-59901
+外部：http://52.80.87.177:8080/browse/RW-68313
+
+e03氛围灯配置：0101
+e0y氛围灯配置：0011
+
 
 氛围灯设置信号id： 0x670000b7
 
@@ -2426,5 +2636,156 @@ ICC外发主驾记忆：
 
 对手件给ICC反馈记忆状态：
 0x64228018
+
+
+冷启动进入车辆设置常用界面，等一会，车模会闪一下，原因：雄狮音乐会预加载，启动了activity，导致车模走了onpause，又onresume
+
+
+台架str状态进入：红线：IGN和ACC（线是黑色的，线头是红色的，接在正极），两个线同时拔掉，过一会电流会掉到0.3左右，会进入str，收到SUSPEND_ENTER；重新接上后，会SUSPEND_EXIT，在 ON
+mCarPowerManager = (CarPowerManager) car.getCarManager(Car.POWER_SERVICE);
+            if (mCarPowerManager != null) {
+                mCarPowerManager.setListener(new CarPowerManager.CarPowerStateListener() {
+                    @Override
+                    public void onStateChanged(int i) {
+                        MLog.d(TAG, "initCarPowerListener onStateChanged i=" + i);
+                        if (CarPowerManager.CarPowerStateListener.ON == i && CarPowerManager.CarPowerStateListener.SUSPEND_ENTER == mSuspendEnter) {
+                            mSuspendEnter = -1;
+                            System.exit(0);
+                        }
+                        if (CarPowerManager.CarPowerStateListener.SUSPEND_ENTER == i) {
+                            mSuspendEnter = i;
+                        }
+                        SPUtils.getInstance().put(SpKey.CAR_POWER_STATE, i);
+                    }
+                });
+                
+                
+我们的车机是支持 ab分区的，也就是可以刷两个系统。
+1. telnet cdc-qnx，qnx下执行指令 swdl_utils 可以改当前分区
+2. 然后执行 switch.sh a或者switch.sh b就可以切分区
+3. qnx下执行reset，重启
+
+
+比如在当前系统下是b分区，usb升级就会升级a分区，自动重启，就会从a分区启动。这时想回退到之前的版本，可以执行上的操作，回到a分区的版本。
+
+这样，如果切换版本，就不需要频繁刷机了。
+
+
+
+所有使用SwitchCompat控件的界面，可见即可说的设置都需要复写textOn/textOff属性，否则SwitchCompat会默认注册“开启”/“关闭”。 此时用户唤醒后说“开启”“关闭”就会出现可见即可说响应混乱的问题。
+
+
+- 屏蔽无障碍服务扫描（**频繁刷新控件例如进度条或者非必需响应可见即可说诉求的多层嵌套的控件**，建议从需求导入阶段就拒掉对应的可见即可说的需求，产品定义不需要响应可见即可说的View或者ViewGroup）
+
+  **屏蔽单个控件：android:importantForAccessibility="no"**
+
+  **屏蔽控件及其子控件：android:importantForAccessibility="noHideDescendants"**
+
+- 滑动类型的控件（RecyclerView、ListView、ScrollView、ViewPager）已由助理侧实现了,应用侧不需要关注实现
+
+E0Y PHEV车型，release分支已经拉出来了，0307分支，月底sop，有0y的bug，提到0128的，也需要同步到 0307分支，同时检查下7号开始提到master和0128的，有需要cp到0307的不要遗漏。
+
+
+
+后视镜电动调节是标配，和配置字无关。这个弹框肯定有。
+方向盘电动调节，03关联 方向盘电动调节配置字，0y关联转向管住柱调节配置字
+方向盘电动调节弹框离得恢复和保存 的显示隐藏关联 方向盘记忆配置字；后视镜电动调节弹框离得恢复和保存 的显示隐藏关联 后视镜下翻配置字
+RW-57279,RW-57290
+
+
+
+老的软件版本，后视镜弹框里记忆恢复的按钮，关联的是 后视镜记忆这个配置字。
+当时这么更改的缘由是因为此单：
+内部：http://jira.i-tetris.com/browse/RW-32508
+外部：http://52.80.87.177:8080/browse/RW-37671
+本单中，后视镜里记忆恢复的按钮没有显示出来，是因为后视镜记忆配置字配置的值是0.
+短期解决方案：
+后视镜记忆配置字 改成 ，重启后即可显示。
+长期解决方案：
+OTA升级1.5版本。（3.12号 根据公司内部task RW-57279，将后视镜弹框里的记忆恢复按钮的关联配置字改成 后视镜倒车下翻 。 3.12 以后的版本中修复此问题）
+
+
+app运行内存，主要是由3d车模和图片消耗。
+以0y为例：
+正常点击各个tab，车辆设置运行内存占839M，去掉车模和大图，运行内存占用260M。
+其中大图占用150M。
+
+大图占用运行内存的逻辑：
+E0X全屏尺寸是2560 * 1440的像素，每个像素需要4字节去解析，解析这张图片需要
+2560 * 1440 * 4 的字节，也就是14M。
+如果车身颜色都可以修改的话，所有的图片都要重新加载一边，内存占用量的增加数，就是每张图片的像素 宽 * 高 * 4，粗略估计，每切换一次颜色，运行内存增加一两百M。
+
+目前E0X车辆设置卡顿的主要原因就是，使用了太多的图片和车模。
+如果把这些车模和图片去掉，体验非常流畅。
+继续增加图片的使用，只会让车辆设置越来越卡。
+
+
+
+gerrit上这样可以搜索 自己在某个工程里的提交记录
+owner:self project:apps/gladius/android/chery/e0x/RedwoodCarSettings
+
+
+
+adb shell am start com.android.settings
+国际化开发时，用这个可以进入andrroid 原生的系统设置，可以更改语言
+
+
+翻译表格连接：
+如果已经有的string key的文言变动，此key只有自己用的话，就加到连接的对应的月份里；
+如果此key已经多出使用，当前修改人需要创建新的key，以满足当前的文言变动需求。并把新key加入到对应的月份里。
+https://docs.google.com/spreadsheets/d/1biPtc5cjjC7XozSrOKD7ZBRI6JFbeDdF/edit#gid=730388321
+
+国际翻译文档管理规范：
+新增功能或者原有中文文言变动，请使用新的string key。只要改中文string文件，其他string不要添加。同时把新增的string key加到翻译表格的对应的月份里；
+相关开发定期同步表格到代码中。如果遇到测试提的需要文本换行的需求，转给黄成，黄成在文本里加上\n 后，我们再同步到代码里。
+
+阿拉伯：values-ar-rIL
+德语：values-de-rDE
+西班牙语：values-es-rES
+波斯：values-fa-rIR
+法语：values-fr-rFR
+意大利：values-it-rIT
+希伯来文 (以色列)：values-iw-rIL
+荷兰：values-nl-rNL
+波兰：values-pl-rPL
+葡萄牙：values-pt-rPT
+俄文：values-ru-rRU
+瑞典：values-sv-rSE
+土耳其：values-tr-rTR
+乌克兰：values-uk-rUA
+挪威：values-nn-rNO
+
+
+values-en-rGB
+values-en-rUS
+
+
+   const val LAN_CHINA = "zh"//中文
+    const val LAN_UK = "en"//英式英语  values-en-rGB
+    const val LAN_RUSSIA = "ru"//俄国   values-ru-rRU
+    const val LAN_ARAB = "ar"//阿拉伯  values-ar-rIL
+    const val LAN_PERSIAN = "fa"//波斯 values-fa-rIR
+    const val LAN_PORTUGUESE = "pt"//葡萄牙  values-pt-rPT
+    const val LAN_UKRAINIAN = "uk"//乌克兰  values-uk-rUA
+    const val LAN_SPANISH = "es"//西班牙语   values-es-rES
+    const val LAN_GERMAN = "de"//德语    values-de-rDE
+    const val LAN_TURKISH = "tr"//土耳其语  values-tr-rTR
+    const val LAN_FRENCH = "fr"//法语   values-fr-rFR
+    const val LAN_ITALIAN = "it"//意语  values-it-rIT
+    const val LAN_DUTCH = "nl"//荷兰语 values-nl-rNL
+    const val LAN_POLISH = "pl"//波兰语  values-pl-rPL
+    const val LAN_SWEDISH = "sv"//瑞典语  values-sv-rSE
+    const val LAN_NORWAY = "nn"//挪威语 values-nn-rNO
+    const val LAN_ISRAEL = "iw"//希伯来语（以色列） values-iw-rIL
+
+
+
+
+
+
+
+
+
+
 
 
