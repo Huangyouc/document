@@ -1,0 +1,5 @@
+切换中文：
+adb shell am startservice -n com.mega.voicerelayservice/.service.IflytekService -a com.mega.iflytekservice.receive_semantic  --es com.mega.voicerelayservice.data "$(cat /home/huangyouchang/下载/命令行切换语言/c)"
+
+切换英文：
+adb shell am startservice -n com.mega.voicerelayservice/.service.IflytekService -a com.mega.iflytekservice.receive_semantic  --es com.mega.voicerelayservice.data "$(cat /home/huangyouchang/下载/命令行切换语言/e)"

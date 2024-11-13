@@ -1,0 +1,3 @@
+
+adb shell am startservice -n com.mega.voicerelayservice/.service.IflytekService -a com.mega.iflytekservice.receive_semantic  --es com.mega.voicerelayservice.data "$(cat /home/huangyouchang/open_screen)" 
+

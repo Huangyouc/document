@@ -1,0 +1,10 @@
+1.trace录制
+perfetto的基本配置在perfetto里，打开文件可以修改参数
+点击start_perpetto.bat，开始录制，录制时长在pbtxt文本里设置，默认10s，太长的话会导致trace文件超大
+trace录制完后，点击pull_perfetto_trace.bat，可将trace文件导出
+
+2.trace分析
+打开https://ui.perfetto.dev/
+点击open trace file，将导出的文件打开
+加载完就可以看到数据了
+点击switch to legacy UI，就可以切换老版本的systrace界面，建议trace文件不要超过65M
