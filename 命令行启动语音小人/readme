@@ -1,0 +1,5 @@
+
+adb shell am startservice -n com.android.launcher3/com.mega.redwoodavatar.service.VpaCommandService -a com.mega.redwoodavatar.do_action --es decision "$(cat /home/lishaowei/文档/命令备忘录/0)"   
+
+"$(cat /home/lishaowei/文档/命令备忘录/0)"    修改一下路径
+size修改1 2 3可以修改窗口大小

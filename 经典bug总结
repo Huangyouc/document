@@ -1,0 +1,38 @@
+
+
+经典bug总结(奇葩bug总结)：
+后雾灯打开 车机车模不显示
+内部：http://jira.i-tetris.com/browse/RK-29267
+外部：http://211.159.155.78:8080/browse/RK-24054
+TELLTALE_FOG_LIGHT_R这个livedata在CarsettingActivity和LightFragment中均有注册。
+当CarsettingActivity处于后台，LightFragment会释放所有的信号监听；
+若此时TELLTALE_FOG_LIGHT_R发生信号变化，CarsettingActivity能收到变化，但是LightFragment收不到；
+回到前台时，LightFragment重新注册信号监听，并接受 TELLTALE_FOG_LIGHT_R最新值；
+问题在于LightFragment重新注册TELLTALE_FOG_LIGHT_R信号，使用的观察者context还是 CarsettingActivity，所以本质上和CarsettingActivity里重复了，导致注册后收不到最新值回调;
+所以LightFragment里 的后雾灯按钮的状态和实际不一致。
+
+
+切换语音等级设置选项，下方详情文言不改变
+http://jira.i-tetris.com/browse/RW-117753
+通过key寻找livedata的过程中，
+SequoiaSettings.valueOf(key.toUpperCase());
+java.lang.CaseMapper#toUpperCase的实现单独判断了土耳其语，做了特殊处理，导致  pref_key_voice_level 变成大写后，不是 PREF_KEY_VOICE_LEVEL，所以无法找到，导致写入失败
+
+手机遗忘提醒重启后自动打开：重启后仪表上报的值是0,表示关闭但是客户端显示成开启，因为注册livedata后立刻给ui上报默认值1,此时ui做了处理，就是收到1,主动下发开启信号
+内部：http://jira.i-tetris.com/browse/RK-36234
+外部：http://211.159.155.78:8080/browse/RK-29538
+
+uuid读取不到或者需要过很久才能读取到的问题：
+http://jira.i-tetris.com/browse/RW-124271
+原因有二：
+1.删除了  CarPropertyValue<String> requestUuid = new CarPropertyValue<>(
+                Signal.ID_UUID_INFO, "");
+        MegaCarManager.getInstance(context).setRawProp(requestUuid);
+        导致carservice无法收到 Uuid/info这个topic的值
+        2. 相同的topic，注册了两个信号Settings.ID_UUID_DATA、Signal.ID_UUID_INFO，导致只有Signal.ID_UUID_INFO才能收到回调
+        3.系统属性只能通过系统属性的方式去读MegaSystemProperties.get()，通过carproperty的方式去读，有延迟；这也是为什么之前通过carproperty去读配置字，偶现读不到的情况；配置字不是信号，最好不要通过carproperty去读，有延迟。
+        
+
+http://jira.i-tetris.com/browse/RW-124920
+一进入车设，操作两下，就自动重启（中控和仪表都重启）
+日志中看不出来异常。最后排查，是测试台架的稳压电源设置的最大电流是3.5A；车设应用在前台，加上车模应用，使用的电流可能会超过3.5A,稳压电源无法提供超过3.5A的电流，导致主机自动重启。 调大稳压电源的电流设置即可解决此问题。

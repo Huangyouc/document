@@ -1,3 +1,29 @@
+强制重新设置
+直接在 ~/.bashrc 或 ~/.profile 中重新定义：
+echo 'export ANDROID_HOME="$HOME/Android/Sdk"' >> ~/.bashrc
+echo 'export PATH="$PATH:$ANDROID_HOME/tools:$ANDROID_HOME/platform-tools"' >> ~/.bashrc
+source ~/.bashrc
+
+huangyouchang@huangyouchang:~$ echo $ANDROID_HOME
+/opt/sdk
+
+
+java -version
+openjdk version "17.0.6" 2023-01-17
+OpenJDK Runtime Environment (build 17.0.6+0-17.0.6b829.9-10027231)
+OpenJDK 64-Bit Server VM (build 17.0.6+0-17.0.6b829.9-10027231, mixed mode)
+
+读取java配置的路径：
+readlink -f $(which java)
+/opt/android-studio/jbr/bin/java
+
+查看系统安装的所有java的路径：
+sudo update-alternatives --config java
+* 0            /usr/lib/jvm/java-17-openjdk-amd64/bin/java      1711      自动模式
+  1            /usr/lib/jvm/java-11-openjdk-amd64/bin/java      1111      手动模式
+  2            /usr/lib/jvm/java-17-openjdk-amd64/bin/java      1711      手动模式
+  3            /usr/lib/jvm/java-8-openjdk-amd64/jre/bin/java   1081      手动模式
+
 如果 adb操作提示 Operation not permitted
 
 请先 adb root && adb remount，然后再操作
@@ -6,6 +32,40 @@ exit 退出当前 adb操作
 
 杀掉这个应用，清掉数据：
 adb shell pm clear com.mega.settings
+
+unity私有数据目录：
+/data/user_de/0/com.mega.carmodel
+
+gerrit查看 automotive的提交记录
+https://git.i-tetris.com/q/project:qcom/sa/quic/la/vendor/mega/hardware/automotive,2075
+
+
+gitdir=$(git rev-parse --git-dir); scp -p -P 29418 youchang.huang@git.i-tetris.com:hooks/commit-msg ${gitdir}/hooks/
+如果报错：
+subsystem request failed on channel 0
+scp: Connection closed
+可以改成：
+gitdir=$(git rev-parse --git-dir); scp -O -p -P 29418 youchang.huang@git.i-tetris.com:hooks/commit-msg ${gitdir}/hooks/
+
+
+查看  Settings.Global.putInt 写入的数据：
+cd /data/system/users/0 
+cat settings_global.xml | grep HICAR
+
+
+电脑网络连接车机：
+车机分享热点，电脑连接热点
+netstat -rn
+看下Gateway的地址，比如192.168.170.216
+然后adb connect 192.168.170.216
+会提示connected to 192.168.170.216:5555
+然后adb device 看下设备
+
+
+adb断开所有连接设备：
+adb kill-server
+adb start-server
+
 
 
 本机刷的e0y，Redwood新增信号后，需要把新增的代码导入到机器里，由王锐 给  android.hardware.automotive.vehicle@2.0-mega-service  和 RedwoodCarService.apk 两个文件：
@@ -121,6 +181,9 @@ Select Programmer  选中下载的qfi_bin/boot_8155/boot_images/QcomPkg/SDMPkg/8
 
 
 
+文件管理器，比如windows随便打开一个文件夹，左上角输入这个地址：\\10.58.50.10，然后输入帐号:share，密码:share，可以进入公司的共享文件目录
+
+
 CarSetting 本地模拟发送信号：
 电脑连上板子后，
 adb shell
@@ -128,12 +191,13 @@ telnet cdc-qnx
 root
 
 
+
 on -T msg_center_t -u msg_center msg_center_test -t BodyInfo/BrakePedal '{"extension":null,"relative":false,"time":0,"type":4194304,"unit":"","valid":true,"value":1}'
 on -T msg_center_t -u msg_center msg_center_test -t EnergyInfo/PowerStatus '{"extension":null,"relative":false,"time":0,"type":4194304,"unit":"","valid":true,"value":2}'
 on -T msg_center_t -u msg_center msg_center_test -t VehicleDoor/CurrentPosition/FrontLeft '{"extension":null,"relative":false,"time":0,"type":4194304,"unit":"","valid":true,"value":100}'
 on -T msg_center_t -u msg_center msg_center_test -t VehicleDoor/Door/FrontLeft '{"extension":null,"relative":false,"time":0,"type":4194304,"unit":"","valid":true,"value":100}'
 
-on -T msg_center_t -u msg_center msg_center_test -t VehicleWindow/Window/FrontLeft '{"extension":null,"relative":false,"time":0,"type":4194304,"unit":"","valid":true,"value":100}'
+on -T msg_center_t -u msg_center msg_center_test -t VehicleWindow/Window/FrontLeft '{"extension":null,"relative":false,"time":0,"type":4194304,"unit":"","valid":true,"value":10}'
 on -T msg_center_t -u msg_center msg_center_test -t Light/HighBeam '{"extension":null,"relative":false,"time":0,"type":4194304,"unit":"","valid":true,"value":1}'
 on -T msg_center_t -u msg_center msg_center_test -t Light/LowBeamEx '{"extension":null,"relative":false,"time":0,"type":4194304,"unit":"","valid":true,"value":1}'
 on -T msg_center_t -u msg_center msg_center_test -t Light/Off '{"extension":null,"relative":false,"time":0,"type":4194304,"unit":"","valid":true,"value":1}'
@@ -144,12 +208,23 @@ on -T msg_center_t -u msg_center msg_center_test -t Light/FogLamp/Rear '{"extens
 on -T msg_center_t -u msg_center msg_center_test -t Light/LightHeight '{"extension":null,"relative":false,"time":0,"type":4194304,"unit":"","valid":true,"value":3}'
 on -T msg_center_t -u msg_center msg_center_test -t Enh_PosLamp/Ntf_PosLampSt '{"extension":null,"relative":false,"time":0,"type":4194304,"unit":"","valid":true,"value":1}'
 on -T msg_center_t -u msg_center msg_center_test -t BodyInfo/SpoilerStatus '{"extension":null,"relative":false,"time":0,"type":4194304,"unit":"","valid":true,"value":1}'
+reev非电动门：
+on -T msg_center_t -u msg_center msg_center_test -t VehicleDoor/reevLHFdoors '{"extension":null,"relative":false,"time":0,"type":4194304,"unit":"","valid":true,"value":1}'
+bev非电动门：
+on -T msg_center_t -u msg_center msg_center_test -t VehicleDoor/Door/FrontLeft '{"extension":null,"relative":false,"time":0,"type":4194304,"unit":"","valid":true,"value":1}'
+电动门：
+on -T msg_center_t -u msg_center msg_center_test -t VehicleDoor/CurrentPosition/FrontLeft '{"extension":null,"relative":false,"time":0,"type":4194304,"unit":"","valid":true,"value":100}'
 
+
+on -T msg_center_t -u msg_center msg_center_test -t EnergyInfo/LvBatt1/SOCREEV '{"extension":null,"relative":false,"time":0,"type":4194304,"unit":"","valid":true,"value":60}'
+on -T msg_center_t -u msg_center msg_center_test -t EnergyInfo/LvBatt1/SOCREEV '{"extension":null,"relative":false,"time":0,"type":4194304,"unit":"","valid":true,"value":60}'
+on -T msg_center_t -u msg_center msg_center_test -t ADAS/FctaFctbConfig '{"extension":null,"relative":false,"time":0,"type":4194304,"unit":"","valid":true,"value":1}'
 
 
 on -T msg_center_t -u msg_center msg_center_test -t KeyInput/RightOk/WakeUpVoice '{"extension":null,"relative":false,"time":0,"type":4194304,"unit":"","valid":true,"value":"123456"}'
 on -T ic_apps_t -u ic_apps /usr/bin/mega_ipc_pub -t "BodyInfo/BrakePedal" -m '{"value":1, "valid": true}' 
 
+//电源状态
 on -T msg_center_t -u msg_center msg_center_test -t DrivingInfo/Gear '{"extension":null,"relative":false,"time":0,"type":4194304,"unit":"","valid":true,"value":1}'
 on -T msg_center_t -u msg_center msg_center_test -t VehicleDoor/TrunkDoorOpenDegree '{"extension":null,"relative":false,"time":0,"type":4194304,"unit":"","valid":true,"value":90}'	
 
@@ -159,7 +234,40 @@ on -T msg_center_t -u msg_center msg_center_test -t VehicleDoor/TailgateSWReev '
 
 on -T msg_center_t -u msg_center msg_center_test -t VehicleDoor/reevHood '{"extension":null,"relative":false,"time":0,"type":4194304,"unit":"","valid":true,"value":1}'
 
+on -T msg_center_t -u msg_center msg_center_test -t DrivingInfo/Speed '{"extension":null,"relative":false,"time":0,"type":4194304,"unit":"","valid":true,"value":90.0}'
 
+
+on -T msg_center_t -u msg_center msg_center_test -t Light/DirectionIndLeft '{"extension":null,"relative":false,"time":0,"type":4194304,"unit":"","valid":true,"value":1}'
+on -T msg_center_t -u msg_center msg_center_test -t Light/DirectionIndRight '{"extension":null,"relative":false,"time":0,"type":4194304,"unit":"","valid":true,"value":1}'
+
+
+on -T msg_center_t -u msg_center msg_center_test -t VehicleDoor/ControlModeSettingInfo/FrontLeft '{"extension":null,"relative":false,"time":0,"type":4194304,"unit":"","valid":true,"value":1}'
+on -T msg_center_t -u msg_center msg_center_test -t VehicleDoor/ControlModeSettingInfo/FrontRight '{"extension":null,"relative":false,"time":0,"type":4194304,"unit":"","valid":true,"value":1}'
+on -T msg_center_t -u msg_center msg_center_test -t VehicleDoor/ActuateStatus/FrontLeft '{"extension":null,"relative":false,"time":0,"type":4194304,"unit":"","valid":true,"value":2}'
+on -T msg_center_t -u msg_center msg_center_test -t VehicleDoor/ActuateStatus/FrontRight '{"extension":null,"relative":false,"time":0,"type":4194304,"unit":"","valid":true,"value":2}'
+//快充枪连接：
+on -T msg_center_t -u msg_center msg_center_test -t VehicleCharge/DCChargePlugged '{"extension":null,"relative":false,"time":0,"type":4194304,"unit":"","valid":true,"value":1}'
+//正在充电：
+on -T msg_center_t -u msg_center msg_center_test -t Telltale/ChargeState '{"extension":null,"relative":false,"time":0,"type":4194304,"unit":"","valid":true,"value":1}'
+
+慢充枪连接：
+on -T msg_center_t -u msg_center msg_center_test -t EnergyInfo/ChargeGunStatus '{"extension":null,"relative":false,"time":0,"type":4194304,"unit":"","valid":true,"value":1}'
+//正在放电：
+on -T msg_center_t -u msg_center msg_center_test -t EnergyInfo/WorkingMode '{"extension":null,"relative":false,"time":0,"type":4194304,"unit":"","valid":true,"value":6}'
+
+//2 or 3 放电枪插上，不是 2 or 3 就是断开    这里发的就是放电枪连接
+on -T msg_center_t -u msg_center msg_center_test -t EnergyInfo/ChargeGunStatus '{"extension":null,"relative":false,"time":0,"type":4194304,"unit":"","valid":true,"value":3}'
+
+on -T msg_center_t -u msg_center msg_center_test -t RMCU2/F/b/DernOverSpd '{"extension":null,"relative":false,"time":0,"type":4194304,"unit":"","valid":true,"value":1}'
+
+
+
+
+
+平推模式：
+on -T msg_center_t -u msg_center msg_center_test -t VehicleDoor/DoorControlMode/Front '{"extension":null,"relative":false,"time":0,"type":4194304,"unit":"","valid":true,"value":2}'
+剪刀模式：
+on -T msg_center_t -u msg_center msg_center_test -t VehicleDoor/DoorControlMode/Front '{"extension":null,"relative":false,"time":0,"type":4194304,"unit":"","valid":true,"value":1}'
 
 然后：
 on -T msg_center_t -u msg_center msg_center_test -t DrivingInfo/DrivingModeOut '{"extension":null,"relative":false,"time":0,"type":4194304,"unit":"","valid":true,"value":0}' 
@@ -176,9 +284,78 @@ adb shell  msg_center_test -t Sensor/OutsideAirQuality  '{"value":10.5}'
 其中 Sensor/OutsideAirQuality 是信号，'{"value":10.5}' 是值。
 
 
+
+车窗锁
+on -T msg_center_t -u msg_center msg_center_test -t VehicleDoor/WindowLockStatus '{"extension":null,"relative":false,"time":0,"type":4194304,"unit":"","valid":true,"value":1}'
+adb shell msg_center_test -t VehicleDoor/WindowLockStatus  '{"value":1}'
+充电口
+on -T msg_center_t -u msg_center msg_center_test -t VehicleDoor/ChargeGate '{"extension":null,"relative":false,"time":0,"type":4194304,"unit":"","valid":true,"value":1}'
+后视镜折叠
+on -T msg_center_t -u msg_center msg_center_test -t BodyInfo/RearViewFold '{"extension":null,"relative":false,"time":0,"type":4194304,"unit":"","valid":true,"value":1}'
+零压座椅
+on -T msg_center_t -u msg_center msg_center_test -t QueenLieInfo/notifyQueenModeStatus '{"extension":null,"relative":false,"time":0,"type":4194304,"unit":"","valid":true,"value":2}'
+便捷装载
+on -T msg_center_t -u msg_center msg_center_test -t BodyInfo/EasyLoadingEnable '{"extension":null,"relative":false,"time":0,"type":4194304,"unit":"","valid":true,"value":1}'
+便捷下车
+on -T msg_center_t -u msg_center msg_center_test -t BodyInfo/EasyLoadingEnable '{"extension":null,"relative":false,"time":0,"type":4194304,"unit":"","valid":true,"value":1}'
+儿童锁
+on -T msg_center_t -u msg_center msg_center_test -t VehicleDoor/ChildLock/RearRight '{"extension":null,"relative":false,"time":0,"type":4194304,"unit":"","valid":true,"value":1}'
+
+
+
+
 接受信息：
 msg_center_test -r Sensor/OutsideAirQuality
 msg_center_test -r BodyInfo/EPBState
+
+
+
+adb shell 后，可以直接发送命令控制信号，不用进入qnx发
+车窗锁
+adb shell msg_center_test -t VehicleDoor/WindowLockStatus  '{"value":1}'
+后视镜折叠
+adb shell msg_center_test -t BodyInfo/RearViewFold  '{"value":1}'
+充电口
+adb shell msg_center_test -t BodyInfo/RearViewFold  '{"value":1}'
+后尾门
+adb shell msg_center_test -t VehicleDoor/TailgateSWReev  '{"value":1}'
+adb shell msg_center_test -t VehicleDoor/Door/GatePostion  '{"value":95}'
+快/慢充电枪连接
+adb shell msg_center_test -t VehicleCharge/DCChargePlugged  '{"value":1}'
+adb shell msg_center_test -t EnergyInfo/ChargeGunStatus  '{"value":1}'
+正在充电：
+adb shell msg_center_test -t Telltale/ChargeState  '{"value":1}'
+放电枪插上：
+adb shell msg_center_test -t EnergyInfo/ChargeGunStatus  '{"value":3}'
+正在放电：
+adb shell msg_center_test -t EnergyInfo/WorkingMode  '{"value":6}'
+打开主驾车门：
+adb shell msg_center_test -t VehicleDoor/Door/FrontLeft  '{"value":100}'
+adb shell msg_center_test -t VehicleDoor/reevLHFdoors  '{"value":1}'
+打开副驾车门
+adb shell msg_center_test -t VehicleDoor/Door/FrontRight '{"value":100}'
+adb shell msg_center_test -t VehicleDoor/reevRHFdoors  '{"value":1}'
+打开左后车门
+adb shell msg_center_test -t VehicleDoor/Door/RearLeft '{"value":100}'
+adb shell msg_center_test -t VehicleDoor/reevLHRdoors  '{"value":1}'
+打开右后车门
+adb shell msg_center_test -t VehicleDoor/Door/RearRight '{"value":100}'
+adb shell msg_center_test -t VehicleDoor/reevRHRdoors  '{"value":1}'
+
+打开主驾车窗
+adb shell msg_center_test -t VehicleWindow/Window/FrontLeft  '{"value":100}'
+打开副驾车窗
+adb shell msg_center_test -t VehicleWindow/Window/FrontRight '{"value":100}'
+打开左后车窗
+adb shell msg_center_test -t VehicleWindow/Window/RearLeft '{"value":100}'
+打开右后车窗
+adb shell msg_center_test -t VehicleWindow/Window/RearLeft '{"value":100}'
+
+后雾灯：
+adb shell msg_center_test -t Light/FogLamp/Rear '{"value":1}'
+
+
+
 
 灯光效果，过滤点击事件，位置灯信号接受，给unity发的消息：
 ComboLightPreference: newValue=|light_ctrl
@@ -210,6 +387,13 @@ adb shell screencap -d 2 -p > sdcard/screen_2.png  && adb pull /sdcard/1.png
 scrcpy -r test.mp4
 
 
+向相册本地增加图片：
+将图片推到 /sdcard/DCIM/P ，重启即可在相册本地看到这个图
+
+8295 修改字体：
+adb shell settings put system font_scale 2.0 
+
+
 message:'com.mega.carsettings.provider.slice.panel.parking.power.switch' 过滤出这个slice有没有绑定上
 
 wireshark使用：
@@ -221,18 +405,17 @@ sudo wireshark 启动
 someipsd.entry.serviceid==0xa701
 过滤出来后，即有Offer，又有Subscribe 和 SubscribeAck，这是一个完整的牵手过程，说明这个服务正常的。
 
-Rocky overlay的gerrit目录，点击path_history:
-https://git.i-tetris.com/plugins/gitiles/qcom/sa/quic/la/vendor/mega/device/rocky/+log/refs/heads/dev_hqx.4.5.5/RRO
 
-huangyouchang@huangyouchang:~/workspace/E0XOS/android/android/out/target/product/rocky/vendor/overlay$ 
-FrameworkCommonrockyRRO.apk.1
-FrameworkCommonrockyRRO.apk
+如果没有权限编辑文件：
+sudo chmod a+w /etc/ssh/ssh_config
 
-单独编译FrameworkCommonrockyRRO.apk
-正常流程，目录 android/android/device/mega/rocky/RRO/Frameworks/,直接执行 mm 就能打包FrameworkCommonrockyRRO.apk
-仓库目录：android/android/device/mega/rocky/
+ubuntu系统文件夹提示：不是所有者，所以没有更改权限
+假设您的用户名是 user123，您想获取 /opt/test_app 文件夹的权限
+sudo chown -R user123:user123 /opt/test_app
 
 
+如果没哟权限删除文件：
+sudo rm -rf sdk2
 
 
 运行git remote列出现有的远程，并查看其名称和URL：
@@ -283,6 +466,12 @@ sudo apt-get install vim
 git修改文本编辑器为vim
 git config --global core.editor "vim"
 
+
+连接上后，进度条卡在100%，就是进不去页面的情况
+被控电脑ubuntu:
+sudo vim /etc/gdm3/custom.conf   把#WaylandEnable=false前的#号删掉
+sudo service gdm3 restart
+然后重启电脑
 
 
 
@@ -406,6 +595,10 @@ someipsd.entry.serviceid ==0xa923  someipsd.entry 是用来查看 someip的握�
 点击Subscribe，相同方式可以看到 对方给我们回的是UDP还是TCp。
 
 
+电脑交换空间设置：
+https://developer.huawei.com/home/forum/hwc/thread-0210178450634573081-1-1.html
+
+
 
 adb shell
 telnet cdc-qnx
@@ -423,6 +616,18 @@ adb shell am start -n com.mega.audiotesttools/.MainActivity
 
 查看电源模式：on表示中控ui界面可以触摸
 adb shell dumpsys car_service get-power-state
+
+
+rocky:/ # mega_car set Power#SCREEN_CONTROL_REQUEST '{"type":"2", "mode":"1", "priority":"0", "reason":"test"}'
+rocky:/ # dumpsys car_service get-power-state
+    CurrentState: {mState=STANDBY(7), listenerState=STANDBY(15)}
+    PrevState: {mState=ON(1), listenerState=ON(6)}
+rocky:/ # dumpsys car_service get-power-state
+    CurrentState: {mState=ON(1), listenerState=ON(6)}
+    PrevState: {mState=STANDBY(7), listenerState=STANDBY(15)}
+  上面是看电源模式，下面是切电源模式adb shell后进入执行telnet cdc-qnx
+执行megapm_switch_state.sh  
+    
 
 
 adb root
@@ -501,6 +706,11 @@ zgrep "value: 1" *//过滤出所有 包含value: 1 的语句（有空格的情�
 或者：
 zgrep EHMI_ACADJUST_NOTIFY_AC_REQUEST  *
 
+zgrep -e "CarSettingActivity->onResume" -e "CarSettingActivity->onStop" *
+
+文件中过滤关键字
+grep "showWallpaper" -nr ./
+
 
 过滤出指定包名的进程：
 adb shell ps | grep com.mega
@@ -523,11 +733,16 @@ redwood:/ # kill -9 9096
 scrcpy --display 0
 查看第二个屏幕
 scrcpy --display 1
-查看第三个屏幕
+查看第三个屏幕（后排）
 scrcpy --display 2
+scrcpy --display-id 2
+仪表
+scrcpy --display-id 4
 
 scrcpy默认打开第一个屏幕
 
+adb shell dumpsys display 可以看到所有屏幕
+adb shell dumpsys display | grep -iE "displayinfo"
 
 logcat -b
 日志等级：（一定要了解这些日志等级的含义）
@@ -749,7 +964,7 @@ jarsigner -verbose -keystore XXXXX.keystore -signedjar notepad_signed.apk notepa
 1)jarsigner是工具名称，-verbose表示将签名过程中的详细信息打印出来；
 2)-keystore XXXXX.keystore 表示签名所使用的数字证书所在位置，没有写路径，表示文件在当前目录；
 3)-signedjar notepad_signed.apk notepad.apk 表示给notepad.apk文件签名，签名后的文件名称为notepad_signed.apk；
-4)最后面的XXXX.keystore 表示证书的别名，对应于生成数字证书时-alias参数后面的名称
+4)最后面的XXXX.keystore 表示证书的别名，对应于生成数字证书时-alias参数后面的名称（keyAlias）
 
 使用jarsigner对APK重签名，提示：jarsigner: 无法对 jar 进行签名: java.util.zip.ZipException: invalid entry compressed size (expected 41278 but got 42575
 bytes) bytes)
@@ -759,6 +974,16 @@ bytes) bytes)
 网易云音乐的apk，我先把apk push 到vendor/app目录下，重启后，点击这个app会崩溃；但是我直接用 adb install apk 启动这个apk就不会崩溃
 解决办法：
 按照正常的集成apk的方式，集成到系统中，android.mk和device.mk都配置好，重启个版本，验证ok。
+
+
+系统集成apk，启动报错：so dlopen，解决方案：https://docs.google.com/document/d/1n2-A9btZv-QZpvyoy91UyVXR7fojKRilX2Q34-06CSE/edit?tab=t.0#heading=h.2okknt7574gu
+
+
+
+使用Deepin-Wine安装企业微信（优化更好）
+wget -O- https://deepin-wine.i-m.dev/setup.sh | sh
+sudo apt update
+sudo apt install com.qq.weixin.work.deepin
 
 
 公司的自己的网盘地址：
@@ -831,6 +1056,11 @@ reset
 
 查看ic_service进程在不在
 ps -e | grep ic_  
+
+sudo su
+赋予当前文件夹全部权限
+
+cp -R opt/ /abc  将opt拷贝到 abc文件夹下
 
 
 
@@ -930,6 +1160,8 @@ logcat.log.086_1970_01_01_08_55_02.gz:01-01 08:54:29.526719   978  2926 I am_anr
 
 很明显，是内存不足。
 
+liblog后面的数字，就是丢失的日志行数
+
 股份项目的逻辑是：
 MCU负责接入方控信号，识别按键按下，抬起的状态；
 QNX负责判断长按和短按，并封装键值，传给各个模块；
@@ -948,7 +1180,7 @@ AndroidManifest.xml加上  android:sharedUserId="android.uid.system"，配置成
 如果install的应用，和系统中内置的相同包名的应用的sharedUserId不一样，会存在装不上的情况install_failed_shared_user_incompatible
 需要先手动卸载 系统里内置的apk
 adb shell pm path com.mega.redwoodautolinetest
-看下路径在哪里, 然后删除这个路径下的apk,adb reboot, 然后在 adb install
+看下路径在哪里, 然后删除这个路径下的apk;然后确保app签名和系统保持一致
 
 
 查看当前目录下，各个文件的大小：
@@ -961,6 +1193,11 @@ adb shell wm size
 seLinux权限问题，需要总结起来
 
 
+打开终端，直接 history | grep abcd  可以过滤出，以前历史使用的adb命令
+
+
+
+
 如果板子运行软件，无法debug，用cat /etc/version 看下软件是userdebug还是user版本。user版本无法debug。或者重启自己的电脑试试
 
 雄狮畅听需要配置车架号：调试方法
@@ -970,6 +1207,26 @@ Tsp平台信息 -> 右上角全部测试 ，返回 -> 点击 模拟测试开关 
 adb shell settings put  global persist.sys.lion.sim.active 1
 个人中心激活
 
+adb shell am startservice -n com.mega.ecology/com.mega.ecology.service.EcologyMediaService
+
+
+
+雄狮音乐激活使用：
+adb shell settings put global isTestMode 1
+adb shell settings put global isTestDev 1
+adb shell settings put global TestVin E0YFLREEVT8295051
+adb shell settings put global TestTboxSn FE0YFL#T8295051#
+adb shell settings put global lion.car.vin E0YFLREEVT8295051
+adb shell settings put global TestSn 20250618295051
+adb shell settings put global TestIccId 89860202506188295051
+adb shell am force-stop com.lion.tsp
+adb root
+adb shell am start com.lion.tsp/.ui.TspTestActivity
+pause
+
+
+
+
 命令行开启ota升级页面：
 adb shell am start -n com.mega.ota.test/com.mega.ota.test.UpdateDialog
 
@@ -977,7 +1234,14 @@ adb shell am start -n com.mega.ota.test/com.mega.ota.test.UpdateDialog
 adb shell am start -n com.lion.os.service/com.lion.os.service.activity.MainActivity
 Tsp平台信息 -> 数据埋点，点击测试环境 
 
-8295 ota升级失败，执行adb enable-verity,然后进入仪表：mount -uw /mnt/，然后在仪表中 执行reset。 然后不要执行adb root，直接ota升级。
+8295 ota升级失败的解决方案，执行adb enable-verity,然后进入qnx：mount -uw /mnt/，然后在qnx下 执行reset。 然后不要执行adb root，直接ota升级。
+如果还是ota失败，先恢复出厂设置，再执行上诉步骤。
+
+
+8295不用小板，线刷升级：
+直接输入adb root && adb shell msg_center_test -t uartrpc_svc/general_ctrl/req '~!b:0x7f0x080x900x080x90' && adb shell msg_center_test -t uartrpc_svc/general_ctrl/req '~!b:0x7f0x080x900x080x08'
+然后用qfile刷
+
 
 user 版本需要 install apk 的时候，需要先启动 root 权限。
 启用 root 权限：
@@ -1034,6 +1298,8 @@ https://www.cnblogs.com/satire/p/16590170.html
 
 一般系统应用，system或者vendor下面的，都有权限在sdcard里读写。
 
+如果一个文件无法被复制，提示没有权限，可以这样：
+sudo chmod 777 aaa.pcap
 
 使用voy_ut工具，写三码数据到板子里：
 adb root;adb remount 
@@ -1094,14 +1360,6 @@ msg_center_test -t uartrpc_svc/uds/req '~!b:0x030x010x000x0f0x010x0e0x800x2e0xf1
 和qnx侧新增topic，需要重新打carService推进去，重启后才能生效。
 
 
-systemui本地运行：
- ./../../gradlew clean && ./../../gradlew :Redwood:RedwoodSystemUI:assembleDebug --info && adb root && adb remount && adb push ./build/outputs/apk/debug/RedwoodSystemUI.apk /system/system_ext/priv-app/RedwoodSystemUI/RedwoodSystemUI.apk && adb shell killall com.android.systemui
-
-
-查看依赖关系
-./../../gradlew -q Redwood:RedwoodSystemUI:dependencies
-
-
 提交apk的，cp到别的分支的时候，如果出现冲突，就要注意 cp过去的apk是否空掉
 
 可以看到分支合入了哪些代码：
@@ -1112,9 +1370,22 @@ power
 notepad安装
 sudo snap install notepad-plus-plus
 
+反编译jar包：
+下载工具：
+wget https://github.com/java-decompiler/jd-gui/releases/download/v1.6.6/jd-gui-1.6.6.jar
+java -jar jd-gui-1.6.6.jar
+拖拽目标 JAR 文件到窗口
+导出源码：
+单文件：右键类名 → Save Source
+完整包：File → Save All Sources 导出为 ZIP
+
+这个网站更牛逼，直接托进去jar包，反编译后，下载zip包，解压即可
+http://www.javadecompilers.com/
+
 
 代码检查：
 java -jar ../../cores/modules/checkstyle/diff-checkstyle-v0.0.3.jar -c ../../cores/modules/checkstyle/megaos-java-checks.xml ./src
+java -jar ../../cores/modules/checkstyle/diff-checkstyle-v0.0.3.jar -c ../../cores/modules/checkstyle/megaos-java-checks.xml ./main/src
 
 如果报错：
 com.puppycrawl.tools.checkstyle.api.CheckstyleException: cannot initialize module SuppressionFilter - Unable to find: checkstyle_suppression.xml
@@ -1126,6 +1397,72 @@ git branch  <新分支名> 41250fc
 通过这个命令行来创建新分支，并把这次提交上去。
 然后切换到你想提交的分支，执行 git cherry-pick 41250fc   
 然后在git push
+
+
+cannot be opened,because it is a shallow repo
+解决方案：
+当前app项目根目录下：
+git fetch --unshallow
+
+
+
+解决方案：
+安装 commit-msg 钩子（自动生成 Change-Id）：
+bash
+gitdir=$(git rev-parse --git-dir)
+scp -p -P 29418 youchang.huang@git.i-tetris.com:hooks/commit-msg "${gitdir}/hooks/"
+修改最后一次提交（自动注入 Change-Id）：
+
+bash
+git commit --amend --no-edit
+重新推送代码：
+
+bash
+git push origin HEAD:refs/for/master
+注意事项：
+权限问题：如果 scp 失败，请检查：
+
+是否已添加服务器的 SSH 公钥到您的 Git 账户
+
+尝试用 curl 手动下载钩子：
+
+bash
+curl -Lo .git/hooks/commit-msg http://git.i-tetris.com/tools/hooks/commit-msg
+chmod +x .git/hooks/commit-msg
+多提交情况：如果是多个提交缺少 Change-Id：
+
+bash
+git rebase -i HEAD~2  # 修改最近2个提交（根据实际数量调整）
+# 将除第一个提交外的所有行首的 "pick" 改为 "reword"
+# 保存退出后会逐个打开编辑器，直接保存关闭即可（触发钩子）
+git push origin HEAD:refs/for/master
+原理说明：
+Gerrit 代码审核系统要求每个提交包含唯一的 Change-Id（形如 I5a9d1748f912345b6a7890c1d2e3f4g5h6i7j8k9l0）。commit-msg 钩子会在提交时自动生成这个标识符插入到提交消息底部。
+
+如果仍有问题，请检查：
+钩子是否安装成功（查看 .git/hooks/commit-msg 是否存在）
+提交信息末尾是否已包含 Change-Id（使用 git log 查看最新提交）
+
+
+
+
+系统冷启动，Luncher被拉起来，
+后续Launcher自己异常死掉也会被拉起来，
+这两种情况下的进程被拉活，有办法区分出来么？
+用一个非persist的property，进程起来就写一个值，如果系统重启这个值是空的，如果app进程重启，这个值非空
+sys.debug.bq.logs  类似这样的，只要不是persist开头就行
+比如：
+String oldTimeString = MegaSystemProperties.get("sys.debug.empty_fl30_activity", "0");
+   如果oldTimeString是默认值0,说明是重启了
+   重启拉活后，设置MegaSystemProperties.set("sys.debug.empty_fl30_activity", String.valueOf(currentTime));
+   后续app自己死掉再起来，读取MegaSystemProperties.get("sys.debug.empty_fl30_activity", "0");的值不会是0
+   至于重启第一次读取是0.
+
+
+
+版本 = 仪表+安卓APP+平台
+主线版本= master仪表 + master安卓 + dev_hqx.4.5.5平台
+1206版本= master仪表 + master安卓 + sop/rocky 1206平台
 
 
 
@@ -1147,6 +1484,18 @@ x86_64
 
 查看apk签名：
 keytool -printcert -jarfile RedwoodSystemUI.apk
+
+adb shell
+md5sum 某个文件，可以查看其md5值
+
+carmodel 推包，出现 No space left on device，空间不足，
+adb shell
+df -h   查看各个区域的磁盘占用情况,应该是system目录下，空间剩余不够600M
+解决方法：
+删除老的/system/priv-app/RedwoodCarModel/这个目录下的carmodel包，然后重启，然后再推包；然后再恢复出厂设置即可
+或者重新打carmodel的包，尝试删掉unity或者unreal的包
+
+
 
 
 工程模式写入avm，会导致外置功放的配置失效
@@ -1220,19 +1569,35 @@ python3 fastboot_complete.py --pf=8155_la --st=ufs
 
 上面刷机脚本执行完以后，系统不会自动重启，需要执行reboot命令：
  fastboot reboot
+ 
+使用qfile刷机，出现qfile和主机一会断开一会连上的情况：
+1.主机彻底断电，等5分钟后再上电
+2.小板子，按钮按住10s以上
 
 
 
 https://mastergo.com/
+点击右上角的设计文件，
+先将底图托进去，然后托第二张图进去，点击第二张图，按数字5,就是50%透明度，可以将底图透出来，可以比对ui
 
-导出的图片复制进去 按数字几5就是50%的透明度
-两张图片都复制进去
-然后两张图都选中然后对齐就行
+
+
+MasterGo
+帐号：
+youchang.huang@megatronix.co
+密码：
+Hyc@123456
+
+车模按钮跟随系统按键音：
+AudioManager audioManager = (AudioManager) AppGlobals.getInitialApplication()
+                    .getSystemService(Context.AUDIO_SERVICE);
+            int sound = AudioManager.FX_KEY_CLICK;
+            audioManager.playSoundEffect(sound);
 
 
 打开布局边界：
-adb shell
-setprop debug.layout true
+adb shell setprop debug.layout true
+
 这时命令不会立即生效，需要重新打开应用
 
 
@@ -1274,6 +1639,33 @@ https://apps.microsoft.com/store/detail/%E4%B8%B2%E5%8F%A3%E8%B0%83%E8%AF%95%E5%
 window下用这个串口工具更好用点
 
 
+8538使用串口经验：
+windows电脑安装 PuTTY软件
+使用usb/type c 的线，type c连接上小板，先将usb口和电脑连上，打开电脑的设备管理器，找到端口A，看下是COM多少，比如COM7
+然后将小板子查到车机，然后打开putty，选择Serial, Host Name写 COM7，port 填 115200（固定值），然后点Open；
+然后打开windows的终端，输入reboot bootloader
+然后打开linux电脑，在源码的VENDOR.13.2.9/out/target/product/maple目录下 打开终端，执行./flash_android.sh即可刷android。
+成功后可以拉日志，之前起不来的日志也有。
+
+执行：
+adb shell setprop persist.vendor.usb.mode host
+切换成usb模式。
+串口上，在Putty上切换到android：lxc-attach android
+然后执行：setprop persist.vendor.usb.mode host 也可以切换成 usb模式
+
+如上使用串口，在Putty上切换到android：lxc-attach android
+然后执行：setprop persist.vendor.usb.mode device
+就可以切换回adb
+
+串口的命令行下，执行lxc-attach android，就是进入android,可以使用logcat查看android日志
+
+
+通过android代码去寻找usb串口，android和usb串口通信案例：
+http://jira.i-tetris.com/browse/MP-1069
+两个绿色的usb小板，GND直接相接，TX和RX线对换接
+
+
+
 使用以下命令查看APK签名：(只能看v1签名)
 jarsigner -verify -verbose -certs app-release.apk
 有v2签名的，可以用这个：
@@ -1289,6 +1681,9 @@ adb shell getprop show.wheel.help  返回 1
 代码中对应：MegaSystemProperties.getInt("show.wheel.help",0); 
 MegaSystemProperties.set("show.wheel.help",1);
 
+adb shell setprop ro.prefix.pkn.name com.mega.chery.controller.
+adb shell getprop ro.prefix.pkn.name 会返回 com.mega.chery.controller.
+
 privapp权限增加：
 在device仓库下（git clone ssh://git.i-tetris.com:29418/qcom/sa/quic/la/vendor/mega/device/redwood）
 privapp-permissions-redwood.xml 文件中添加需要的文件。如果缺失权限，在系统的报错日志里，会给出具体缺哪些权限，缺一个报一个，缺两个会报两个。把日志里缺失的权限都加上
@@ -1296,7 +1691,20 @@ privapp-permissions-redwood.xml 文件中添加需要的文件。如果缺失权
 privapp-permissions-redwood.xml这个文件在板子里的目录是：/vendor/etc/permissions/privapp-permissions-redwood.xml
 
 验证方式：adb pull /vendor/etc/permissions/privapp-permissions-redwood.xml，在privapp-permissions-redwood增加需要的权限，然后再推到 /vendor/etc/permissions/。重启验证。
-未找到systemui的权限在哪里
+
+
+8538的systemui的包在目录：/system_ext/priv-app/CarSystemUI/CarSystemUI.apk
+所以私有权限在：/system_ext/etc/permissions/com.android.systemui.xml，其他应用的在 /system/etc/permissions/privapp-permissions-mega-maple.xml
+注意systemui应用在system_ext里，所以私有权限也在system_ext/etc/里
+#https://git.i-tetris.com/c/qcom/qcm/LA.QSSI.15.0.R2/platform/frameworks/base/+/858285   代码目录在：QSSI.15/frameworks/base/data/etc
+8358的systemui权限更改，应该参考：https://git.i-tetris.com/c/qcom/qcm/android/device/mega/maple/+/865541  上面这个不需要改
+
+
+prebuild mk  文件中配置了LOCAL_VENDOR_MODULE := true，表明app放在vendor目录下，
+比如 RedwoodCarController在/vendor/priv-app目录， 则permissions文件目录应该是 这种：vendor/etc/permissions/privapp-permissions-redwood.xml
+prebuild mk  文件中没有配置LOCAL_VENDOR_MODULE := true，表明app放在system目录下，
+比如 RedwoodSystemUI 在/system/system_ext/priv-app， 则permissions文件目录应该是 这种：/system/system_ext/etc/permissions/com.android.systemui.xml
+也有在在/system/priv-app，则permissions文件目录应该是 这种：/system/etc/permissions/com.android.systemui.xml
 
 
 地图权限配置：
@@ -1339,6 +1747,29 @@ mOnPowerChangeListener.onPowerChange(getPower());
 
 车辆设置里通过  mCarPowerManager = (CarPowerManager) car.getCarManager(Car.POWER_SERVICE); 
 监听电源变化，通过关键字 CAR.POWER: notify power state 来过滤日志
+
+
+台架通过命令行切换电源模式：
+进入qnx：
+# megapm_switch_state.sh 
+1) Standby2Active                       5) Active2ScreenSaver_by_stop_calling
+2) Active2Standby                       6) Standby2STR                       
+3) Active2ScreenSaver                   7) ShutdownSOC                       
+4) ScreenSaver2Active                   8) break                             
+Select a func to execute: 2
+- - - - - - - - - - - start set QNX+Android to standby - - - - - - - - - - -
+2025-07-23 16:15:55.200 [ Debug ]: Application registered payload data segment 0x1a18343000 with size 13105200 to id 2
+send data success: {"extension":"", "relative":false, "time":1704067208913, "valid":true, "value":4}
+2025-07-23 16:15:55.203 [Verbose]: RouDi cleaned up resources of msg_center_test. Shutting down gracefully.
+- - - - - - - - - - - set to standby end - - - - - - - - - - -
+
+
+
+ubuntu系统使用 sqlite数据库的可视化工具：
+自带的软件商店里，搜索DB，安装后，
+打开：DB Browser for SQLlite
+导出来的数据库需要重命名加下后缀名：.db
+使用 DB Browser for SQLlite 打开 这个数据库文件，在浏览数据 里看 数据
 
 
 
@@ -1417,6 +1848,8 @@ gedit logcat.log 打开这个日志
 adb shell am start -n com.mega.ota.test/com.mega.ota.test.UpdateDialog
 
 adb shell am start -n com.mega.ecology/com.mega.chery.adapter.MainActivity
+
+adb shell am start -n com.android.systemui/com.android.systemui.clean.OneKeyCleanActivity --display 5
 
 
 根目录执行：
@@ -1506,7 +1939,44 @@ livedata有时间限制，dowrite到接收信号回调中间有2秒限制;如果
 AreaLiveDataStore.obtain(ID_MFS_SWITCH_MODE.getId()).observeForever(mObserver);
 不使用livedata，可以直接使用 
 
-EntryLocks.ID_DOOR 对应主驾车门信号：BCM_Door_FL  0xA400 8004
+EntryLocks.ID_DOOR 对应主驾车门信号：BCM_Door_FL  0xA400 8004   A401
+
+
+大家调用
+ Car car = Car.createCar(context);
+这个代码的时候注意下，createCar的入参context，不要用activity，会导致activity泄漏，
+而且泄漏后通过hprof文件很难查出来，
+hprof文件指向底层 LoadedApk$ServiceDispathcer，并没有明确信息告知泄漏的路径。
+所以createCar的入参，请使用applicationContext，如果Car.createCar调用的地方比较多，可以自己实现个单例，在单例中初始化一次Car.createCar，业务中使用到car时，通过自己的回调接口来实现。
+
+
+VehSettings中的对象，如果是这么使用：
+ ID_DMS_DETECT_PERMISSION_SWITCH(Signal.ID_DMS_DETECT_PERMISSION_SWITCH) {
+        @Override
+        public void write(Object value) {
+            Settings.System.putInt(
+                    AppGlobals.getInitialApplication().getContentResolver(),
+                    SequoiaConstants.KEY_VISION_DETECT_PERMISSION,
+                    (int) value);
+            super.write(value);
+        }
+
+        @Override
+        public Object read() {
+            int value = Settings.System.getInt(
+                    AppGlobals.getInitialApplication().getContentResolver(),
+                    SequoiaConstants.KEY_VISION_DETECT_PERMISSION, 0   //默认off
+            );
+            return value;
+        }
+    },
+其中，Signal.ID_DMS_DETECT_PERMISSION_SWITCH的PropertyDefine属性只有publish，即只有对外发送值的功能，不会接收数据。
+ 如果使用  AreaLiveDataStore.obtain(ID_DMS_DETECT_PERMISSION_SWITCH).observeForever(this)  这种方式监听数据变化，
+只有在ID_DMS_DETECT_PERMISSION_SWITCH.write 写入的时候，收到一次回调；过2s会收到默认0值的回调，因为 CarPropertyLiveData的更新值的逻辑是在写入值的2s后，从carservice读取值，但是当前信号是不接收carservice值的。
+
+这种情况，请使用 ContentObserver的方式监听数据变化，不要监听信号变化。
+
+
 
 
 车辆升级的是
@@ -1541,7 +2011,7 @@ u0_a30         5065    373 2689032 185612 do_epoll_wait       0 S com.iflytek.au
 
  ps -ef | grep center
  
-电源模式对应  d1：on    d2：comfort  d3：off
+电源模式对应  d1：on    d2：comfort  d3：off   d4:拔小电瓶   d3对应standby
 
 空调push进去vendor/priv-app/RedwoodHvac/：
 adb shell 
@@ -1721,6 +2191,8 @@ https://drive.google.com/drive/u/0/folders/12ZlxxuFww_kOmCjJThnPWkW-mOLS_488
 
 
 按键日志通过 receive KeyInput/Event过滤看起来正常的，但是通过 Firing events 过滤出来的 日志，没有记录，说明没有应用拦截按键。
+01-21 17:23:05.315587  3074  3464 I CarInputManager: [ (CarInputManager.java:100)#lambda$dispatchCustomInputEvent$1 ]Firing events CustomInputEvent{mInputCode=10, mAction=1, mDownTime=13492599, mEventTime=13492703, mRepeatCount=0} on callback u1.e$a@196f154
+Firing events过滤出来的日志，说明这个事件被 3074 这个进程消费。
 按键分发通过Firing events
 过滤出来的日志里，没有雄狮媒体的进程，因为强制分发通道level force，没有打印Firing events，不走 Firing events流程。
 
@@ -1747,6 +2219,12 @@ HealthManager: try to kill app: com.mega.redwoodhvac.behindscreen, pid: 5661, re
 https://zhuanlan.zhihu.com/p/658732427  可以找到谁泄漏了，谁持有了泄漏对象
 
 
+有时候，内存爆炸，看prof文件，可能看不到泄漏，需要看下哪个对象的数量很多，则这个对象的引用方式有异常，比如http://jira.i-tetris.com/browse/RW-106246
+
+leakcanary查看内存泄漏：
+implementation 'com.squareup.leakcanary:leakcanary-android:2.14'
+出现泄漏后，杀掉应用进程，点击applist里的Leaks图标可以看到泄漏的信息
+
 
 预制离线地图的数据 ： 是工厂预制，不是我们干的
 
@@ -1771,6 +2249,19 @@ private Observer<Slice> mSliceObserver = new Observer<Slice>() {
 
 
 电源管理，日志中关键字 CAR.POWER
+
+重启关键字：Booting
+会有如下打印：
+Booting Linux on physical CPU 0x0000000000 [0x410fd4c0]
+update_verifier: Booting slot 0: isSlotMarkedSuccessful=1
+android.hardware.wifi@1.0-service: Wifi Hal is booting up...
+ActivityManagerTiming: FinishBooting
+SystemServiceRegistry: 	at com.android.server.am.ActivityManagerService.finishBooting(ActivityManagerService.java:5284)
+ActivityManager: User 0 state changed from BOOTING to RUNNING_LOCKED
+
+
+am_proc_died 可以看到死亡进程
+
 
 查看某个apk版本：
 adb shell "dumpsys package com.mega.carsettings |grep versionName"
@@ -1908,6 +2399,10 @@ http://jira.i-tetris.com/browse/RW-52092
 日志中搜索 animation-leash 或者 Layer可以看到信息。
 
 
+layer泄漏导致activity泄漏导致内存耗净：分析过程
+内部：http://jira.i-tetris.com/browse/RW-121120
+外部：http://211.159.155.78:8080/browse/RW-102242
+
 
 已修复，请使用1205版本验证。
 
@@ -2039,6 +2534,14 @@ com.mega.phev 内存泄露，请处理
 http://jira.i-tetris.com/browse/RW-36895
 
 
+进入车辆设置页面卡滞
+内部：http://jira.i-tetris.com/browse/RK-40180
+外部：http://211.159.155.78:8080/browse/RK-32774
+车设回到前台，没给 WallpaperService的Engine回调onVisibilityChanged
+徐涌分析原因是：user版本开了log d级别的日志，导致整体卡顿，关掉后复测多次没有复现
+
+
+
 座椅 恢复功能的20S超时逻辑，飞书和周倪青确认，暂不实现  RW-26936
 
 长按方控无法唤起全景影像   
@@ -2098,6 +2601,12 @@ adb shell am start -n com.mega.engineeringmode/.function.offlineconfiguration.Of
 adb shell am start -n com.mega.engineeringmode/.function.offlineconfiguration.OfflineConfigurationActivity --ei eamp_value 1 --ei car_mode 1
 adb shell am start -n com.mega.engineeringmode/.function.offlineconfiguration.OfflineConfigurationActivity --ei eamp_value 1 --ei car_mode 1 --ei high_performance 0
 
+adb shell am start -n com.mega.engineeringmode/.function.AdbActivity
+adb shell am start -n com.mega.engineeringmode/.MainActivity
+adb shell am start -n com.mega.carsettings/.CarSettingActivity
+adb shell am start -n com.android.launcher3/.activity.AppListActivity
+
+adb shell am start -n com.mega.rmu/.MainActivity
 
 
 有E2E保护的someip数据，看最后一位
@@ -2106,6 +2615,8 @@ adb shell am start -n com.mega.engineeringmode/.function.offlineconfiguration.Of
 android seekbar拖动的时候不发送信号：
 app:updatesContinuously="false"
 
+
+adb shell pm grant com.android.systemui android.permission.BLUETOOTH_CONNECT 系统异常导致缺少权限的都可以用这个解决
 
 
 // 重启中
@@ -2189,14 +2700,24 @@ E03横置增程国内项目无氛围灯配置，无该功能。
 内部：http://jira.i-tetris.com/browse/RW-68997
 外部：http://52.80.87.177:8080/browse/RW-74259
 
+notifybmschgwireconnectsts=1丢失，车模依旧显示充电枪连接状态
+RK-34281
+这里车模的逻辑复杂，分慢充枪，快充枪，充电状态
+单独断开其中一个信号，去处理车模，无法控制。
+所以此项逻辑，不加入代码中，避免车模显示错乱。
+理论上实车不会有此断开的逻辑；实车如果存在信号断开的情况，需要对手件排查了。
 
 
-https://docs.google.com/spreadsheets/d/1imBr07T03l1tuAwLM-yzVBk18d6mOP233QkcW41rGjQ/edit#gid=0
-此表格非长期，待总体bug降下来后，就不用了
-填完bug后，过一下，看看哪些bug是可以快速消掉的，争取填到当天的计划中。
+根本原因：车设对unity的初始化日志一切正常，但是unity内部发生异常，应用层无法干预
+改善对策：升级unity版本，并将unity所在进程独立出来，后续就算unity异常崩溃也不会导致车设崩溃。
+修复版本：ota5
+商品车问题】【E0Y】【LNNBDDES2RD579034】车辆设置里的显示界面闪退
+内部：http://jira.i-tetris.com/browse/RW-103563
+外部：http://211.159.155.78:8080/browse/RW-93160
 
 
-
+是车辆设置前换到非车模页面，再切换到其他应用，此时出于性能等方面的考虑，将车模置于后台，下次再回到车辆设置，点击带有车模的tab页面，需要有从非车模切换到车模的动作，车模需要进行展示，所以会闪一下。
+鉴于对使用体验没有影响，不做处理。
 
 
 2023.12.21
@@ -2206,6 +2727,13 @@ https://docs.google.com/spreadsheets/d/1imBr07T03l1tuAwLM-yzVBk18d6mOP233QkcW41r
 黄有厂：氛围灯，数字钥匙逻辑
 车辆设置后面的task都交给合肥做，保军持续支持；有bug或者task过来，按照上述责任人 分配，如果某人名下jira太多，再考虑把单子分配给其他人。
 这样做的目的是，一个人固定负责某个模块，代码更熟悉，效率更高。
+
+2025.5.12
+车设分工：
+周学猛：灯光、车辆设置、服务、显示（HUD部分）、部分快捷tab二级功能
+李宝：驾驶、辅助驾驶、大部分快捷tab二级功能
+黄有厂：快捷tab一级页面、部分快捷tab二级功能
+徐斌/周州：安全、声音、显示（系统设置部分）、连接、语音（应该是雄狮做内容，我们集成）、系统
 
 
 帧动画对包体积和cpu的影响：
@@ -2248,9 +2776,14 @@ RW-39454
 外部：http://52.80.87.177:8080/browse/CRW-13850
 
 
+user版本使用adb root的时候，弹出弹框：root密码，输入 进入qnx的密码即可，比如：Mega#ICC%0630
+
+
 ssh远程：
 ssh matrix@10.57.1.168
 密码：matrix
+
+as的 Profiler 无法加载应用时，可以adb root adb remount后试试
 
 当adb链接多个设备是，adb shell要进入其中一个：
 adb devices
@@ -2319,27 +2852,17 @@ http://jira.i-tetris.com/browse/RW-41325
 oy无此功能
 
 日志通过 CherySystemUIApplication 过滤出系统版本号
+日志通过 string_v 过滤出时间
+version name: 可以过滤出部分生态应用初始化时打印的应用的版本号
+
+Binder.getCallingPid() 获取当前方法是哪个跨进程调用的
 
 
-单独下载0128分支或者0223分支：
-1.配置合肥git环境
-https://docs.google.com/document/d/1bJl1Suj1wt_dXCNpOiSe7ANi5K3B5Ld4jq5-i0PWnOE/edit
-Host git.i-tetris.com
-    user youchang.huang
-    port 29418
-Host git-slave-wh.i-tetris.com
-    user youchang.huang
-    port 29418
-Host git-slave.i-tetris.com
-    user youchang.huang
-    port 29418
-执行  ssh git-slave-hf.i-tetris.com 有回显才算正常
-2.
-repo init -u ssh://git.i-tetris.com/cores/gladius/android/manifest -b release/redwood_hqx.1.2.1_20240128 -m chery/redwood.xml --no-repo-verify --repo-url=ssh://git.i-tetris.com/repo --repo-branch=repo-1 --depth=1
-repo sync -d -c
-
-
-任意工程目录下，repo forall -c git pull   可以拉所有工程的当前分支代码
+huangyouchang@huangyouchang:~/下载$ free
+              总计         已用        空闲      共享    缓冲/缓存    可用
+内存：    65614736    11248460      501848      863916    53864428    52777844
+交换：    33554428       18432    33535996
+或者free -h
 
 
 遇到这种日志：
@@ -2508,6 +3031,8 @@ sudo apt install gvfs-backends
 如果不小心写错了用户名或者密码，重启电脑重新连接配置。
 然后可以把文件拷贝到自己电脑
 
+windows电脑可直接浏览器访问：\\10.57.50.238\multi_pipeline_demo\8ae209b87ffe4d3faa990f1811a13d99\hprof\5c60bae3714b\com.mega.carsettings
+
 
 应用被杀死，参考http://52.80.87.177:8080/browse/CRW-19990 的分析思路。
 
@@ -2556,7 +3081,13 @@ vcc处理的问题
 另外，英文单数还是复数问题，请连续需求人员，给出解决方案。目前文档里给的都是单数
 
 
-
+大屏车窗开关动画有明显延迟
+内部：http://jira.i-tetris.com/browse/RK-47023
+外部：http://211.159.155.78:8080/browse/RK-37634
+实车车窗动作以后，才会将信号给到ICC，这里就有延迟；
+随后车模收到信号，做动画处理，由于车窗信号给过来的不是连续平滑线性的，所以车模在执行动画的时候必须要延迟处理，以达到看起来动画执行线性平滑的效果。
+综上，这个车模车窗动画的执行，比实车慢一点，是无法避免的。
+维持现状。
 
 
 
@@ -2687,6 +3218,9 @@ RESTORE_SAVED_LIGHT_STATUS
 外部：http://52.80.87.177:8080/browse/RW-77055
 监听到电源从下电 到上电 comfort档位，根据需求，需要走氛围灯迎宾流程。逻辑上无问题。
 
+负一屏下电按钮的作用：
+只是让车机休眠，不一定会导致应用进程杀死。重启亮屏后，进程可能还是之前的进程
+
 
 
 车辆设置-氛围灯-动态氛围灯任意选择效果，重启后不记忆选择  ，动态氛围灯模式处于关闭状态
@@ -2708,6 +3242,9 @@ ANR报告：http://xmmp-wh.i-tetris.com/#/task/taskList?projectId=1685427863&tas
 上面日志可以看到，是用户做了点击操作（Input dispatching timed out）
 
 如果还是没有头绪，可以通过 system_monitor 过滤日志，看看系统的RAM 和CPU 是否紧张。
+
+
+deliverInputEvent to package 排查当前时间点有没有点击事件发到应用
 
 
 插入u盘，进入车辆设置异常卡滞后闪退
@@ -2773,7 +3310,11 @@ A4038004
 实车不存在立刻断电的情况，建议不修改。
 
 
-PHEV拖车模式开关按钮回弹 RW-57563
+
+方控按键模拟：
+将脚本 redwood_car_input_test.sh 推到 system/bin
+然后执行脚本 adb shell redwood_car_input_test.sh -k 7 -t 300
+
 
 
 连接can信号分析的电脑：终端输入：
@@ -2937,6 +3478,17 @@ e0y氛围灯配置：0011
 
 
 
+
+在空调界面切换中英文时，闪黑屏
+内部：http://jira.i-tetris.com/browse/RK-39002
+外部：http://211.159.155.78:8080/browse/RK-31819
+目前Android的设计，就是当前focuse display是哪个屏，切换中英文是就会冻结哪块屏，当前操作后排屏，然后通过语音控制切换中英文，focus display在后排屏，冻结的只是后排屏
+中控屏不会冻结，所以出现闪黑（activity会重新创建），这属于正常现象，目前没有很好的方案解决。
+另外，这种场景也比较少，很少有用户如此操作，操作空调，然后马上通过语音去切换中英文，google原生的设计，没有很好的方案做修改，不建议做修改。	
+google issue，无修改方案，建议保持现状。
+
+
+
 和廖丽芬、周倪青确认：
 国际联网的手套箱功能和国内策略一样；
 国际非联网的手套箱，不需要密码，也不用在 整车设置里展示 “电动手套箱密码” 这个开关；点击常用界面的手套箱按钮，直接打开手套箱。
@@ -3086,6 +3638,58 @@ http://jira.i-tetris.com/browse/RW-79609
 日志里发现crash，无法找到APP_LIST这个activity，表示当前系统没有安装Launcher应用，经过和Launcher同学沟通，之前调试这个台架，把Launcher删除，install进去的，所以恢复出厂设置没有了Launcher应用
 
 
+http://jira.i-tetris.com/browse/RK-25362
+同
+内部：http://jira.i-tetris.com/browse/RK-25285
+外部：http://211.159.155.78:8080/browse/RK-20741
+一样问题，处于后台降帧导致的此问题
+
+点击avm，车设车模闪
+内部：http://jira.i-tetris.com/browse/RW-122516
+外部：http://211.159.155.78:8080/browse/RW-102846
+之前提过多次这种问题。
+车模是和页面生命周期绑定的，点击avm，avm有页面弹出覆盖在车设上，导致车设的车模执行隐藏逻辑。但是avm这个页面弹出的瞬间又消失，所以车设车模又显示出来。
+导致了这种闪。
+avm无法解决弹出透明页面的问题。
+维持现状。
+
+
+全景影像界面切换到猎鹰智驾，会先跳出车辆设置界面
+内部：http://jira.i-tetris.com/browse/RW-127781
+外部：http://211.159.155.78:8080/browse/RW-105057
+视频时间在2s时从13:19 跳转 13:20，在视频时间16s时点击了avm的猎鹰智驾按钮，跳转到猎鹰智驾，中间闪现了一下 车设页面。
+从日志分析，在13:20:14s时，也就是点击avm跳转 猎鹰智驾时，本该回到前台的猎鹰智驾，却执行了 removeWindow: packages: ai.weride.compass, windowName，即猎鹰智驾的页面退到了后台；
+随后，系统按照ui层级，将下面的车设ui推到前台，此逻辑从系统层面，是正常的。
+需要智驾看下，为什么点击avm跳转 猎鹰智驾时，智驾有退到后台的动作。
+
+
+空调界面无设置项
+内部：http://jira.i-tetris.com/browse/RK-43049
+外部：http://211.159.155.78:8080/browse/RK-34786
+原因是：极端情况下，Launcher这个activity没有回调onResume方法，需要监听onTopResumedActivityChanged
+
+
+RK-59775
+android.os.DeadSystemRuntimeException: android.os.DeadSystemException
+at android.view.inputmethod.InputMethodManager.reportPerceptible(InputMethodManager.java:647)
+at android.view.ImeInsetsSourceConsumer.onPerceptible(ImeInsetsSourceConsumer.java:180)
+at android.view.InsetsSourceConsumer.applyRequestedVisibilityToControl(InsetsSourceConsumer.java:419)
+at android.view.InsetsSourceConsumer.setControl(InsetsSourceConsumer.java:180)
+at android.view.ImeInsetsSourceConsumer.setControl(ImeInsetsSourceConsumer.java:157)
+at android.view.InsetsController.onControlsChanged(InsetsController.java:887)
+at android.view.ViewRootImpl$ViewRootHandler.handleMessageImpl(ViewRootImpl.java:5739)
+at android.view.ViewRootImpl$ViewRootHandler.handleMessage(ViewRootImpl.java:5693)
+at android.os.Handler.dispatchMessage(Handler.java:106)
+at android.os.Looper.loopOnce(Looper.java:201)
+at android.os.Looper.loop(Looper.java:288)
+at android.app.ActivityThread.main(ActivityThread.java:7918)
+at java.lang.reflect.Method.invoke(Native Method)
+at com.android.internal.os.RuntimeInit$MethodAndArgsCaller.run(RuntimeInit.java:553)
+at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:946)
+Caused by: android.os.DeadSystemException
+分析：DeadSystemException: android.os.DeadSystemException 是一个系统级别的严重错误，表明 Android 系统本身已处于不可用状态。应用程序无法直接防止其发生。
+
+
 
 
 app运行内存，主要是由3d车模和图片消耗。
@@ -3136,31 +3740,6 @@ EOL产线老化测试出现失败，问题分析原则：
 
 
 
-onCheckedChanged checkedId:2131296900 
-
-
-2131297280 座椅调节
-2131297288 车窗控制
-2131297268 便捷控制
-2131297267 星动吧台
-onCheckedChanged checkedId:2131296898 常用
-onCheckedChanged checkedId:2131296902驾驶
-onCheckedChanged checkedId:2131296908 车灯
-onCheckedChanged checkedId:2131296894 氛围灯
-onCheckedChanged checkedId:2131296893 辅助驾驶
-onCheckedChanged checkedId:2131296918 整车设置
-onCheckedChanged checkedId:2131296907 安全设置
-onCheckedChanged checkedId:2131296904 环境舒适
-onCheckedChanged checkedId:2131296906 抬头显示
-onCheckedChanged checkedId:2131296917 车辆状态
-
-onCheckedChanged checkedId:2131296901 显示
-onCheckedChanged checkedId:2131296911 声音
-onCheckedChanged checkedId:2131296899 连接
-onCheckedChanged checkedId:2131296919 智能识别
-onCheckedChanged checkedId:2131296915 系统
-
-
 
 可以通过 日志 setCurrentSelectTab 过滤出tab对应的顺序
 CarSettingSingleUtil: [ (CarSettingSingleUtil.java:107)#setCurrentSelectTab ]unity_change: 　setCurrentSelectTab currentselecttab=3
@@ -3182,6 +3761,7 @@ adb shell am startservice -n com.mega.voicerelayservice/.service.IflytekService 
 
 adb shell am start com.android.settings
 国际化开发时，用这个可以进入andrroid 原生的系统设置，可以更改语言
+8538 : adb shell am start com.android.car.settings
 
 
 翻译表格连接：
@@ -3208,6 +3788,7 @@ https://docs.google.com/spreadsheets/d/1biPtc5cjjC7XozSrOKD7ZBRI6JFbeDdF/edit#gi
 土耳其：values-tr-rTR
 乌克兰：values-uk-rUA
 挪威：values-nn-rNO
+丹麦文:values-da-rDK
 
 
 values-en-rGB
@@ -3250,6 +3831,18 @@ adb shell 'find / -name filename'
 find: /proc/32538/task/32538/exe: No such file or directory
 find: /proc/32538/exe: No such file or directory
 /system/etc/carplay/config.xml
+
+
+rocky:/system # find . -name MegaProperties.jar
+./framework/MegaProperties.jar
+
+find -type f -exec grep -l "mega.car_bp" {} \;   这样查找全部文件是否包括mega.car_bp
+find -name "*mega.car_bp*"   查找所有文件名字包含 mega.car_bp 的文件
+
+
+
+https://git.i-tetris.com/c/qcom/sa/quic/la/vendor/mega/system/debug_tools/+/516431
+可以通过download下载提交的jar包
 
 为了解决从后台回到前台，车模闪一下的问题，增加的截图。
 视频中有渐变，是截图和车模叠加后，截图逐渐消失引起的。
@@ -3381,6 +3974,11 @@ E0Y动态氛围灯没有模式切换，E03有模式切换。
 android studio中 settings 搜索plugin，添加 Legacy Layout Inspector,重启后，在顶部Tools里找到Legacy Layout Inspector，选中响应进程，看布局;surfaceview看不到
 
 
+pwd可以输出当前文件夹完整路径
+huangyouchang@huangyouchang:~/ssd2/maple_os/QSSI.15/out/target/product/qssi/system/priv-app/DvTest$ xdg-open .
+xdg-open . 可以使用文件打开当前的文件的目录
+
+
 使用 uiautomatorviewer 查看布局的流程：
 1.进入目录：/opt/sdk/tools/bin，找到uiautomatorviewer，使用命令行 pwd可以输出当前文件夹路径
 2.进入java目录：/home/huangyouchang/桌面/java8/jdk-8u421-linux-x64/jdk1.8.0_421/bin，拷贝这个目录，
@@ -3400,6 +3998,17 @@ android studio中 settings 搜索plugin，添加 Legacy Layout Inspector,重启�
 由于车模是渲染在Surface上的，中英文切换，系统会先回调onVisibilityChanged，将可见性置为false，也就是不可见状态，随后马上置为true，即可见状态。
 所以看起来会闪一下。
 目前没有办法解决此问题。鉴于 很少有人会去切换中英文，并且 在桌面去语音切换中英文  的场景比较少见，对用户影响不大，所以 此问题不做处理。
+
+
+8295 bev  语音调节座椅到最前，tts反馈没问题，实际未调节
+内部：http://jira.i-tetris.com/browse/RK-32291
+外部：http://211.159.155.78:8080/browse/RK-26508
+有详细的pcap分析
+
+
+蓝牙音乐重新上电后不恢复播放
+内部：http://jira.i-tetris.com/browse/RK-38643
+外部：http://211.159.155.78:8080/browse/RK-31578
 
 
 
@@ -3429,16 +4038,75 @@ com.mega.car.service.CarPropertyService#unregisterListenerBinderForProps：
         }
 
 
+进入车辆设置界面闪现闪烁闪屏3D车模
+内部：http://jira.i-tetris.com/browse/RK-37404
+外部：http://211.159.155.78:8080/browse/RK-30408
+车模作为最底层视图，有的应用需要展示车模，有的应用不需要，在各个应用和首页车模来回切换的时候，车模总会要显示和隐藏来回切换。
+技术上无法避免来回切换，闪一下车模。
+鉴于对实际功能无影响，此类问题不做修改，维持现状。
+底层原理：
+关于壁纸窗口的管理，WindowManagerService负责计算壁纸窗口的Z序和可见性。
+壁纸窗口（TYPE_WALLPAPER）的Z序计算方式与其他窗口不同，它会根据其他窗口的FLAG_SHOW_WALLPAPER标记情况不断调整。
+
+
+非车模页面，切换黑夜白天模式，进入车辆设置闪屏/闪烁
+内部：http://jira.i-tetris.com/browse/RK-53255
+外部：http://211.159.155.78:8080/browse/RK-41690
+车设是以3d车模为背景。
+当切换到其他应用，车模不可见状态，由于性能要求，车模不可见时，需要暂停渲染；所以此时切换黑夜模式，消息发给车模，车模无法做到及时处理。等车设回到前台，车模可见时，才会处理从白天到黑夜的变换。
+所以会看到闪一下。
+鉴于对实际功能没有影响，加上性能限制，技术上也无法继续优化，所以维持现状。
+
+
+
+
+
+http://jira.i-tetris.com/browse/RK-57815
+android.os.DeadSystemRuntimeException: android.os.DeadSystemException
+at android.view.inputmethod.InputMethodManager.removeImeSurface(InputMethodManager.java:2651)
+at android.view.ImeInsetsSourceConsumer.removeSurface(ImeInsetsSourceConsumer.java:150)
+at android.view.InsetsSourceConsumer.setControl(InsetsSourceConsumer.java:185)
+at android.view.ImeInsetsSourceConsumer.setControl(ImeInsetsSourceConsumer.java:157)
+at android.view.InsetsController.onControlsChanged(InsetsController.java:887)
+at android.view.ViewRootImpl$ViewRootHandler.handleMessageImpl(ViewRootImpl.java:5739)
+at android.view.ViewRootImpl$ViewRootHandler.handleMessage(ViewRootImpl.java:5693)
+at android.os.Handler.dispatchMessage(Handler.java:106)
+at android.os.Looper.loopOnce(Looper.java:201)
+at android.os.Looper.loop(Looper.java:288)
+at android.app.ActivityThread.main(ActivityThread.java:7918)
+at java.lang.reflect.Method.invoke(Native Method)
+at com.android.internal.os.RuntimeInit$MethodAndArgsCaller.run(RuntimeInit.java:553)
+at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:946)
+Caused by: android.os.DeadSystemException
+系统级异常，表示 Android 系统本身正在或即将关闭/重启。
+不是应用的bug。这是测试环境下的系统稳定性问题。
+解决方案：
+1. 忽略：在测试脚本中捕获并跳过。
+2. 调整测试：降低测试强度，增加延迟，更换更强设备。
+
+
+
+
 8155启动系统设置页面：
 adb shell am start com.android.settings
 8295启动系统设置页面：
 adb shell monkey --pct-syskeys 0 -p com.android.car.settings -c android.intent.category.LAUNCHER 1
 
+进入设置，连续点击版本号，进入开发者模式，选中 HWUIC呈现模式分析，选中 “在屏幕上显示为条形图”，可以看到屏幕试试刷行的柱状图
+进入设置，连续点击版本号，进入开发者模式，打开 显示刷新频率，可以在左上角看到 60的红色字样
 jenkins查看apk：
 https://jenkins.i-tetris.com/view/Exeed-Rocky/job/rocky_os_release_20240813/16/execution/node/9/ws/android/android/vendor/mega/prebuilts/release_apks/redwood/
 
 
 权限的问题和CarService信号的问题，每个分支都要提，对正常功能不影响.
+
+
+REEV BEV仅区分车型是否是纯电还是增程，不作为整车信号通道(CAN信号orSomeip信号)区分
+后续CAN信号orSomeip信号区分如下：
+5,0架构是走someip的（华为VCC）
+5.1架构是走CAN（FLZCU 埃泰克)
+
+
 
 3d车模相关：
 
@@ -3461,6 +4129,9 @@ https://jenkins.i-tetris.com/view/Exeed-Rocky/job/rocky_os_release_20240813/16/e
 2024-10-10 14:30:24.561  2077-2077  UE4                     com.mega.carmodel                    I  Engine - engine load success
 2024-10-10 14:30:31.332  2077-2480  UnityManager            com.mega.carmodel                    D  unity init end
 
+
+user版本直接执行adb enable-verity会提示verity cannot be disabled/enabled - USER build
+通过touch /persist/debug/enable_dbg方式root后, 执行adb enable-verity就会报图中错误, rm -rf /persist/debug/enable_dbg后重启再次执行adb enable-verity就不会报这个错了
 
 
 
@@ -3496,8 +4167,6 @@ Unable to resume activity {com.android.launcher3/com.android.launcher3.Launcher}
 
 Carmodel目前没有通过systemui启动，所以调试前，需要主动run一下carmodel的工程，运行起来后，才能通过launcher去startservice，否则会报错       BackgroundServiceStartNotAllowedException    
 
-车辆设置里设置成黑夜模式才，不然Launcher报错：
-Process: com.android.launcher3, PID: 11309                                                                                                  java.lang.UnsupportedOperationException: Failed to resolve attribute at index 4: TypedValue{t=0x2/d=0x1010099 a=1}, theme={InheritanceMap=[id=0x1030249android:style/ThemeOverlay.Material.ActionBar, id=0x1030248android:style/ThemeOverlay.Material, id=0x1030247android:style/ThemeOverlay], Themes=[android:style/ThemeOverlay.Material.ActionBar, forced, com.android.launcher3:style/PrimaryHeadline, forced, android:style/Theme.DeviceDefault.Light.DarkActionBar, forced]}
 
 8295目前没有上 healthmanager.xml 白名单策略
 
@@ -3539,17 +4208,582 @@ android:persistent="true"
 去掉这个属性后，可以直接install应用。
 
 
-Launcheru 2d壁纸绘制第一帧后，才会发送sys.launcher_show这个信号，通知系统消失开机动画
-所以在onFirstDraw 执行后，再执行隐藏2d壁纸的逻辑
 
-carmodel manifest中配置 android:sharedUserId="android.uid.system"，
-首页会出现一张默认的壁纸，且车模出不来。
-而且一旦运行过带sharedUserId的carmodel后，后面就算运行不带sharedUserId的carmodel，首页车模也出不来。
-只能通过恢复出厂设置或者重新刷机 来恢复正常。
+tag 过滤：
+package:com.mega.carmodel tag:Util3D tag:UnityWallpaperService
+
+message~:"change_view|3d_scene_visibility"
 
 
+    sourceSets {
+        main {
+            java.srcDirs = ['main/src']
+            res.srcDirs = ['main/res', 'main/res-e03', 'main/res-e0y']
+            aidl.srcDirs = ['main/src']
+            assets.srcDirs = ['main/assets']
+            manifest.srcFile 'main/AndroidManifest.xml'
+        }
+        redwood {
+            isRedwood = true
+            isRocky = false
+            java.srcDirs = ['redwood/src']
+            res.srcDirs = ['redwood/res-carsettings']
+        }
+        rocky {
+            isRedwood = false
+            isRocky = true
+            java.srcDirs = ['rocky/src']
+            res.srcDirs = ['rocky/res-carsettings']
+            manifest.srcFile 'rocky/AndroidManifest.xml'
+        }
+    }
+    
+    如果main中AndroidManifest有的配置，rocky 的AndroidManifest中没有，则rocky会集成main，也有这个配置，比如<uses-permission android:name="android.car.permission.CAR_POWER" />
 
 
+
+经验总结：
+对外提供的sdk，或者测试app，比如eol，一定要加版本号打印；别人提供的sdk给我们集成，最好也要求他们加上版本号打印
+
+能源管理和导航分屏：
+ Bundle bundle = new Bundle();
+        bundle.putString("split_enter_main_pkg","com.mega.phev");
+        bundle.putString("split_enter_side_pkg","com.lion.appfwk.navi");
+        bundle.putString("split_enter_main_act","com.mega.phev.MainActivity");
+        bundle.putString("split_enter_side_act","com.lion.appfwk.navi.activity.MainActivity");
+        bundle.putBoolean("split_enter_main_is_left", false);
+        ContextCompat.getContentResolver().call("com.mega.systemui.chery.Split","enter_spit", "com.mega.phev", bundle);
+主activity要加下 ：android:resizeableActivity="true"
+activity监听分屏：
+ @Override
+    public void onMultiWindowModeChanged(boolean isInMultiWindowMode, Configuration newConfig) {
+        super.onMultiWindowModeChanged(isInMultiWindowMode, newConfig);
+        MLog.i("hyc>>>>>   onMultiWindowModeChanged : " + newConfig);
+    }
+
+
+slice查看器 apk下载地址：
+https://github.com/android/user-interface-samples/releases/tag/slice-viewer-v1.0.1
+然后 adb install -t -r slice-viewer.apk
+然后 adb shell am start -a android.intent.action.VIEW -d slice-content://com.mega.carsettings.provider.slice.panel.trunk.switch
+可以查看这个slice
+如果slice备注了权限 比如android:permission="com.mega.carsettings.export.permission.RedwoodTrunkSlice"，则  slice-viewer.apk 里需要申明权限；或者slice本身删除这个权限
+
+
+android这边渲染智驾，投到仪表，这快逻辑可以咨询白斌，崔乐天
+
+
+给cores转bug单，或者需要cores支持的task，公司规定了流程，大家仔细看下文档。
+https://docs.google.com/document/d/17zfjWHHIKFBoRdTzU5NZ6mgzFDZ7Idnpiak_qX0SMrw/edit?tab=t.0#heading=h.1z8l8k9ig7e7
+
+
+
+大家如果使用slave拉取代码的时候，如果push不上去，提交代码时配置下push url：
+git remote set-url --add --push mega ssh://git.i-tetris.com/apps/gladius/android/chery/e0x/RedwoodCarSettings
+
+adb shell dumpsys wallpaper
+adb shell dumpsys display 把dump结果输出到文件里发我看看，是不是display 5 的display属性有问题
+
+
+V25项目，奇瑞uiue稿，https://www.figma.com/
+账户：youchang.huang@megatronix.co  密码：Hyc@123456
+
+
+国际电子手册：邹云
+蓝牙电话：邹云
+carplay：陈骏
+carlink:鄢龙涛
+在线电台：雄狮
+本地电台：郭本意
+日历：李绍薇
+国际媒体：
+audio：张东琪
+hicar：龙涛
+点击事件分发问题：辛建建  http://jira.i-tetris.com/browse/RK-36413
+InputDisatcher
+
+
+合肥  设计文档地址  ：
+https://drive.google.com/drive/folders/12S7qtNgf60JHaOscDosDSJ0olYSwdmUo
+
+
+
+从cursor官网下载 https://cursor.com/cn,然后进行安装：sudo dpkg -i packagename.deb
+点击cursor启动，如果空白，请重启电脑，然后左上角打开文件夹，打开后，选中某个工程或者目录，就可以问cursor问题了
+最好登录一下再使用，功能更强大 youchang.huang@megatronix.co
+
+向cursor询问UML或者设计文档之类的问题，会给 Mermaid 或者 markdown代码
+
+复制上面的Mermaid代码
+访问 https://mermaid.live/
+粘贴代码到左侧编辑器
+右侧会实时显示图表
+点击右上角的"Export" → "Download PNG/SVG"
+
+或者直接询问cursor，让写一下设计文档，会生成一份 《设计文档.md》即markdown代码
+在网页中https://stackedit.io/，将  《设计文档.md》 的内容拷贝到 这个网页左侧，然后在右侧点击Export as HTML
+将获取到的html使用google浏览器打开，然后右键选择打印，打印机选 pdf（注意要取消选中页脚页眉）
+https://docs.google.com/document/d/1jR-EucQEPiOAcYXRekBWdgxuI2Q45FcmRi_2fjFnBls/edit?tab=t.0
+
+
+
+android源码查看网站：
+http://aospxref.com/
+https://cs.android.com/android
+AndroidStudio 卡的话，如果只是为了查代码，用这两个网站就行，
+
+公司自己的查看源码的地址：http://10.58.1.242:8080/source/xref/
+
+
+使用as打开源码，编译很慢，且无法进行索引，阅读困难
+android根目录下，集成android.iml  android.ipr   android.iws，修改android.iml中的代码目录；使用as直接打开 android.ipr即可。
+
+
+
+双色氛围灯点击后日志过滤：
+mHrgTwoColorLight value = |sendTwoColorSignalSecond|sendTwoColorSignalFirst|doSendSignal mIsLastMusicMode:|write ]ID_AMB_LIGHT_SET:
+ 
+空调车设carmodel三个应用之间切换过滤日志：
+onResume consume:|change_view|CarSettingActivity->onResume|onWindowFocusChanged->hasFocus:
+方便排查时序
+
+
+全屏是盖在左右半边屏幕之上的，目前没有显示，所以透出来下面两个半屏，touch默认也是在全屏上，你们那边如果要测试APP功能的话，需要到QNX下执行下面的命令把touch切到两个半屏才能正常点击左右半边的界面
+full_win=`cat /dev/screen/0/dpy-2 | grep virtio_input | awk '{print $1}'`;screencmd setiv $full_win zorder 0
+
+
+ java.lang.NoSuchFieldError: No static field CONFIG_DISPLAY_DIMENSIONS of type Ljava/lang/String; in class Lcom/mega/ecu/MegaProperties; or its superclasses (declaration of 'com.mega.ecu.MegaProperties' appears in /system/framework/MegaProperties.jar
+
+
+
+FL车设ue ui问题列举：
+1.左右儿童锁和左儿童锁、右儿童锁的交互关系是啥？
+1.快捷页面，很多按钮有置灰态，但是ue中未给出置灰条件，比如儿童锁、加油口，开发需要知道什么情况下将此按钮置灰
+2.很多按钮未给出回弹时间限制，还是之前的默认2s回弹么？
+3.ui上按钮的高亮、置灰、未选中状态，以及个别的按钮的loading状态，对应的icon和动画提供下
+4.配置不同导致功能没有时，比如没有加油口、没有车载冰箱的情况下，ui怎么排版。由于一排分配了4个按钮或者3个按钮，所以缺失一个按钮后，后面的按钮无法自动顶上去
+5.车载冰箱的信号需要提供
+6.快捷按钮上的动画执行，需要有演示效果
+7.所有带3d车模的弹框，根据奇瑞杨工的说法，都要改成全屏的，比如 遮阳、车窗页面、车门页面、车身颜色、ISD数字灯
+8.驾驶模式切换的时候，3d车模需要展示效果么？
+9.驾驶模式个性化页面，动力模式、转向模式等页面，配图使用静态图还是3d车模？
+10.灯光中的主题氛围灯和动态氛围灯，选中后的ui需要补全
+11.音乐律动开启后，部分氛围灯功能是置灰的，需要在ui上体现
+12.电源模式不满足是，部分功能是置灰的，比如辅助驾驶，需要在ui上体现
+13.车辆设置中，有个tab按钮叫车辆设置，这会引起语音的歧义：语音说打开车辆设置，是去打开车设app还是打开车设app的这个车辆设置的tab页面呢？
+
+
+
+
+e0x项目，语音功能中间层解析逻辑：
+1. 8155 全部车型，都是讯飞接收语音，然后将语义抛给镁佳，镁佳通过RedwoodVoiceRelayService将语义分发给各个应用自己解析，自己做处理，然后自己tts播报
+2.8295项目，语音是端到端逻辑：
+  1.车设、车控、空调的语音功能，镁佳给讯飞提供端到端sdk，讯飞通过解析语义，调用端到端sdk的接口，实现功能，然后讯飞根据sdk回复的code做tts播报
+  2.车况查询和能源管理的端到端接口，使用德赛的方案，镁佳不用单独提供接口给讯飞；讯飞解析语义，通过德赛接口传参数，镁佳通过RedwoodVRService 接收讯飞的参数，然后处理功能，并将回复语ID传给讯飞，
+    讯飞做tts播报
+  3.8295其他的镁佳模块，各个应用继续使用德赛接口，实现语音功能
+3.8295 FL项目，语音的语义解析是雄狮做，镁佳作为语义接收方，逻辑不变。镁佳接收的逻辑，沿用8295的逻辑，即：
+  车设、车控、空调的语音功能，镁佳给雄狮提供端到端sdk；雄狮通过解析语义，调用端到端sdk的接口，实现功能，然后雄狮根据sdk回复的code做tts播报
+  镁佳其他模块都使用德赛接口实现语音功能：雄狮解析语义后，调用德赛的接口参数，传给镁佳
+
+
+
+android aar包能内置到系统中么
+https://www.baidu.com/s?ie=utf-8&f=8&rsv_bp=1&rsv_idx=1&tn=baidu&wd=android%20aar%E5%8C%85%E8%83%BD%E5%86%85%E7%BD%AE%E5%88%B0%E7%B3%BB%E7%BB%9F%E4%B8%AD%E4%B9%88&fenlei=256&rsv_pq=0x8cccacb700a6f84e&rsv_t=e09eJ5%2B07MpO2Yl8Ja7J%2BZpzF7RN%2B2C4YfMwwQEBOS%2BqLd6PafI4r4gZP8U&rqlang=en&rsv_dl=tb&rsv_enter=1&rsv_sug3=36&rsv_sug1=33&rsv_sug7=101&rsv_sug2=0&rsv_btype=i&prefixsug=android%2520aar%25E5%258C%2585%25E8%2583%25BD%25E5%2586%2585%25E7%25BD%25AE%25E5%2588%25B0%25E7%25B3%25BB%25E7%25BB%259F%25E4%25B8%25AD%25E4%25B9%2588&rsp=9&inputT=8802&rsv_sug4=10341
+
+
+
+
+systemui的aar包的仓库地址
+https://git.i-tetris.com/admin/repos/cores/gladius/android/apps/MegaSystemUI
+在源码android/android/vendor/mega/packages/apps
+另外还经常修改的源码仓库：android/android/frameworks/base
+网络文章里提到的目录：
+/frameworks/base/packages/SystemUI
+/packages/apps/Car/SystemUI
+
+
+frameworks源码重点关注：
+android/android/frameworks/base/services/core/java
+android/android/frameworks/base/core/java
+android/android/vendor/mega/packages/apps/MegaSystemUI
+android/android/frameworks/base/packages/SystemUI
+
+MegaSystemUI通过 SystemUI-internal中的 CarSystemUI-core-internal，引用到 android/android/frameworks/base/packages/SystemUI 的fwk的代码
+
+
+systemui本地运行：
+ ./../../gradlew clean && ./../../gradlew :Redwood:RedwoodSystemUI:assembleDebug --info && adb root && adb remount && adb push ./build/outputs/apk/debug/RedwoodSystemUI.apk /system/system_ext/priv-app/RedwoodSystemUI/RedwoodSystemUI.apk && adb shell killall com.android.systemui
+ 
+ 
+8538 android15 systemui的aar打包：
+VENDOR.13.2.9/packages/services/Car/car-lib 这个目录是android.car,
+直接进入maple_os/VENDOR.13.2.9$ 
+执行source build/envsetup.sh 
+lunch
+选序号，比如42	
+make android.car，先将android.car.jar打出来:out/target/product/maple/system/framework/android.car.jar
+
+然后到VENDOR.13.2.9/vendor/mega/packages/apps/MegaSystemUI/aartools这个目录，重点看ReadMe.txt,
+注意，ReadMe.txt提到的脚本python modifypackage.py，如果已经执行过一次，就不要再执行了，防止代码中出现多行import com.android.systemui.R
+执行完 会在aartools这个目录生成mega-systemui-lib.aar，将此aar重命名成MegaSystemUI.aar
+
+
+上面是基于android 13打包的流程，android 15 打包android.car.jar的流程是：
+进入docker
+export LXC_TARGET_DEVICE=maple
+cd QSSI.15
+source build/envsetup.sh
+lunch qssi-userdebug
+再 make android.car
+
+
+查看依赖关系
+./../../gradlew -q Redwood:RedwoodSystemUI:dependencies
+
+
+
+8295修改默认应用启动动画：
+Rocky overlay的gerrit目录，点击path_history:
+https://git.i-tetris.com/plugins/gitiles/qcom/sa/quic/la/vendor/mega/device/rocky/+log/refs/heads/dev_hqx.4.5.5/RRO
+
+huangyouchang@huangyouchang:~/workspace/E0XOS/android/android/out/target/product/rocky/vendor/overlay$ 
+FrameworkCommonrockyRRO.apk.1
+FrameworkCommonrockyRRO.apk
+
+rocky:/vendor/overlay/FrameworkCommonrockyRRO.apk
+
+单独编译FrameworkCommonrockyRRO.apk
+正常流程，目录 android/android/device/mega/rocky/RRO/Frameworks/,直接执行 mm 就能打包FrameworkCommonrockyRRO.apk
+仓库目录：android/android/device/mega/rocky/
+
+
+8155 修改应用默认启动动画：
+源码android目录下
+make framework-res
+得到
+Install: out/target/product/redwood/system/product/overlay/framework-res__auto_generated_rro_product.apk
+然后替换overlay文件就行
+adb push framework-res__auto_generated_rro_product.apk /system/product/overlay
+源码目录：
+redwood/android/device/mega/redwood/overlay/frameworks/base/core/res/res
+代码提交仓库地址：
+ssh://youchang.huang@git.i-tetris.com:29418/qcom/sa/quic/la/vendor/mega/device/redwood
+
+8155framwork编译：
+frameworks/base/services
+java framework                make framework                        mmm frameworks/base
+
+framework资源                make framework-res                mmm frameworks/base/core/res
+jni framework                make libandroid_runtime        mmm 
+frameworks/base/core/jni
+binder                                make libbinder                                mmm frameworks/native/libs/binder
+RefBase等                make libutils                        mmm framworks/base/libs/utils
+Looper等                make framework                        mmm framworks/base
+AudioTrack                make libmedia                        mmm framworks/base/media/kibmedia
+AudioFlinger                make libaudiofliginger                mmm framworks/base/libs/audioflinger
+AudioPolicyService        make libaudiopolicy                mmm hardware/msm7k/libaudio-qsd8k
+SurfaceFlinger                make libsurfaceflinger                mmm frameworks/base/libs/surfaceflinger
+Vold                        make vold                        mmm system/vold
+Rild                        make rild                        mmm hardware/ril/rild
+MediaProvider                make MediaProvider                mmm packages/providers/MediaProvider
+Phone                        make phone                mmm packages/apps/Phone
+
+
+进入redwood, 执行 mmm frameworks/base/core/res，编译出 framework-res.apk，然后推到
+板子里/system/framework/framework-res.apk替换。注意：需要删除板子framwork下的arm，arm64,oat三个目录后再推framework-res.apk，否则会出现机器起不来的情况。
+framework-res.apk 这个编译后推进去，出现机器起不来的情况，原因未知。
+
+
+8295 整编android，大概得占个7、800G空间
+
+
+8295_OS_FL/android/android/vendor/mega/packages/apps/RedwoodPermissionGranter
+make RedwoodPermissionGranter
+
+使用杰哥的硬盘：
+huangyouchang@hyc-pc:~/hycccc/8295_OS_FL$ sudo mkdir /mnt/smb_share
+huangyouchang@hyc-pc:~/hycccc/8295_OS_FL$ sudo mount -t cifs -o username=hongjie,password=hongjie //10.56.1.205/Shared /mnt/smb_share
+huangyouchang@hyc-pc:~/hycccc/8295_OS_FL$ cd /mnt/smb_share/
+huangyouchang@hyc-pc:/mnt/smb_share$ xdg-open .
+
+
+
+
+WallpaperService在源码目录：android/android/frameworks/base/core/java/android/service/wallpaper
+改完代码，
+1. make framework-minus-apex  只所以是这个命令，是因为在frameworks/base/下的Android.bp文件，定义了 name: "framework-minus-apex"
+2. adb push \\10.58.1.108\shared_folder\codes\8295-release-0402\android\android\out\target\product\rocky\system\framework\framework.jar /system/framework/
+上面的路径，改成你本地的
+3. adb shell sync
+4. adb reboot
+
+make services
+adb push services.jar /system/framework/
+
+编译安卓源码的时候，或者编译某个jar包，为啥编译到一半，要么电脑自动关机，要么编译失败。
+解决方法：换电脑
+
+FL项目
+./docker/init.sh
+export HQX_TARGET_DEVICE=rocky
+export VEHICLE_MODEL=E0X_FL
+make all
+先完整编译一次，然后再单独编译
+
+
+
+单独下载0128分支或者0223分支：
+1.配置合肥git环境
+https://docs.google.com/document/d/1bJl1Suj1wt_dXCNpOiSe7ANi5K3B5Ld4jq5-i0PWnOE/edit
+Host git.i-tetris.com
+    user youchang.huang
+    port 29418
+Host git-slave-wh.i-tetris.com
+    user youchang.huang
+    port 29418
+Host git-slave.i-tetris.com
+    user youchang.huang
+    port 29418
+执行  ssh git-slave-hf.i-tetris.com 有回显才算正常（不再需要这么确认了，使用下面的两个链接都可以）
+2.
+repo init -u ssh://git-slave.i-tetris.com/cores/gladius/android/manifest -b release/redwood_hqx.1.2.1_20240128 -m chery/redwood.xml --no-repo-verify --repo-url=ssh://git.i-tetris.com/repo --repo-branch=repo-1 --depth=1
+                                                                                                                                                              注意这里没有-slave
+repo sync -d -c
+
+
+任意工程目录下，repo forall -c git pull   可以拉所有工程的当前分支代码
+
+repo forall -c git  ***
+这个命令可以让repo 代码仓里面的所有git仓库同时执行这个命令
+repo forall -c git checkout sop/rocky_hqx.4.5.5_20241206
+repo forall -c git pull mega sop/rocky_hqx.4.5.5_20241206:sop/rocky_hqx.4.5.5_20241206
+
+https://drive.google.com/drive/folders/10flEnkH7_p0Q48qVByh6RqOKmjmehiXz
+
+
+
+或者这样加载源码：整个文件夹全部删除，重新创建源码的文件夹，然后进去
+repo init -u ssh://git-slave.i-tetris.com:29418/qcom/sa/platform/manifest -b  sop/rocky_hqx.4.5.5_20241206  -m release/chery/all.xml --no-repo-verify --repo-url=ssh://git.i-tetris.com:29418/repo --repo-branch=repo-1
+                                                                                                                                                                注意这里没有-slave
+repo sync -dc --no-tags
+
+./docker/init.sh
+export HQX_TARGET_DEVICE=rocky
+export VEHICLE_MODEL=E0X_FL
+make all
+如果之前编译过，make all之前删除下android/ 里的几个 以 _BUILD结尾的文件
+2025.6.18,按照上面的步骤，make all成功，编译产物在源码根目录的burn目录里。
+下次重新编译的话，怎么清理之前的编译产物，以腾出空间呢？（删除下android/ 里的几个 以 _BUILD结尾的文件）
+
+
+gen_minimized_build: saving /home/build/workspace/burn/rocky/burn_images/contents.xml with the updated paths
+Done !!!!
+pushd /home/build/workspace/qnx/build && cp ota /home/build/workspace/burn/rocky/burn_images/common/build -av
+~/workspace/qnx/build ~/workspace
+'ota' -> '/home/build/workspace/burn/rocky/burn_images/common/build/ota'
+'ota/diffota' -> '/home/build/workspace/burn/rocky/burn_images/common/build/ota/diffota'
+'ota/diffota/bsdiff' -> '/home/build/workspace/burn/rocky/burn_images/common/build/ota/diffota/bsdiff'
+'ota/diffota/bsdiff4' -> '/home/build/workspace/burn/rocky/burn_images/common/build/ota/diffota/bsdiff4'
+'ota/diffota/bsdiff4/core.c' -> '/home/build/workspace/burn/rocky/burn_images/common/build/ota/diffota/bsdiff4/core.c'
+'ota/diffota/bsdiff4/format.py' -> '/home/build/workspace/burn/rocky/burn_images/common/build/ota/diffota/bsdiff4/format.py'
+'ota/diffota/bsdiff_ota_image.py' -> '/home/build/workspace/burn/rocky/burn_images/common/build/ota/diffota/bsdiff_ota_image.py'
+'ota/diffota/bsdiff_otapack.sh' -> '/home/build/workspace/burn/rocky/burn_images/common/build/ota/diffota/bsdiff_otapack.sh'
+'ota/diffota/diffconfig.json' -> '/home/build/workspace/burn/rocky/burn_images/common/build/ota/diffota/diffconfig.json'
+'ota/diffota/hdiffz' -> '/home/build/workspace/burn/rocky/burn_images/common/build/ota/diffota/hdiffz'
+'ota/diffota/libc++.so' -> '/home/build/workspace/burn/rocky/burn_images/common/build/ota/diffota/libc++.so'
+'ota/diffota/ota_make_diff_package.py' -> '/home/build/workspace/burn/rocky/burn_images/common/build/ota/diffota/ota_make_diff_package.py'
+'ota/fullota' -> '/home/build/workspace/burn/rocky/burn_images/common/build/ota/fullota'
+'ota/fullota/ota_pack.sh' -> '/home/build/workspace/burn/rocky/burn_images/common/build/ota/fullota/ota_pack.sh'
+'ota/fullota/ota_tar.py' -> '/home/build/workspace/burn/rocky/burn_images/common/build/ota/fullota/ota_tar.py'
+'ota/fullota/partition_cfg.json' -> '/home/build/workspace/burn/rocky/burn_images/common/build/ota/fullota/partition_cfg.json'
+'ota/fullota/sign_ota_image.py' -> '/home/build/workspace/burn/rocky/burn_images/common/build/ota/fullota/sign_ota_image.py'
+'ota/tools' -> '/home/build/workspace/burn/rocky/burn_images/common/build/ota/tools'
+'ota/tools/check_sign_ota.sh' -> '/home/build/workspace/burn/rocky/burn_images/common/build/ota/tools/check_sign_ota.sh'
+'ota/tools/create_key_tool.sh' -> '/home/build/workspace/burn/rocky/burn_images/common/build/ota/tools/create_key_tool.sh'
+'ota/tools/ota_gen_sign.py' -> '/home/build/workspace/burn/rocky/burn_images/common/build/ota/tools/ota_gen_sign.py'
+'ota/tools/ota_gen_verify.py' -> '/home/build/workspace/burn/rocky/burn_images/common/build/ota/tools/ota_gen_verify.py'
+'ota/tools/ota_make_zip.py' -> '/home/build/workspace/burn/rocky/burn_images/common/build/ota/tools/ota_make_zip.py'
+pushd /home/build/workspace/burn/rocky && 7z a burn.7z burn_images
+~/workspace/burn/rocky ~/workspace
+
+7-Zip [64] 16.02 : Copyright (c) 1999-2016 Igor Pavlov : 2016-05-21
+p7zip Version 16.02 (locale=C,Utf16=off,HugeFiles=on,64 bits,24 CPUs 13th Gen Intel(R) Core(TM) i7-13700 (B0671),ASM,AES-NI)
+
+Scanning the drive:
+171 folders, 239 files, 43607055136 bytes (41 GiB)
+
+Creating archive: burn.7z
+
+Items to compress: 410
+
+                                                                               
+Files read from disk: 238
+Archive size: 18045756547 bytes (17 GiB)
+Everything is Ok
+
+
+编译信息重定向：编译并实时查看进度，同时保存日志到项目根目录的build_log.txt
+make android 2>&1 | tee build_log.txt
+
+
+长安长马项目代码：
+repo init -u ssh://git.i-tetris.com/cores/gladius/android/manifest -b master -m changan/huron.xml --no-repo-verify --repo-url=ssh://git.i-tetris.com/repo --repo-branch=repo-1
+
+
+Icar V25 android源码
+repo init -u ssh://git-slave.i-tetris.com:29418/qcom/qcm/platform/manifest -b dev_lxc.2.0 -m release/chery/all.xml --no-repo-verify --repo-url=ssh://git.i-tetris.com:29418/repo --repo-branch=repo-2 -g default,libre
+
+repo sync -dc --force-sync
+
+
+代码根目录下
+yocto download 包下载
+curl -u youchang.huang:Hyc@123456 -O http://hf-artifactory.i-tetris.com/artifactory/archive/soc/qcm8538/yocto/quectel-r2.0/download.zip
+unzip download.zip 
+
+nhlos编译需要工具，代码根目录下执行如下命令：
+curl -u youchang.huang:Hyc@123456 -O http://hf-artifactory.i-tetris.com/artifactory/archive/soc/qcm8538/toolchain/compiler.tar.gz                             
+或者连接访问：http://hf-artifactory.i-tetris.com/artifactory/archive/soc/qcm8538/toolchain/直接下载，然后拷贝到项目根目录
+tar xvf compiler.tar.gz
+cd compiler && for tar in *.tar.gz; do tar xvf $tar; done
+
+
+debug 版本编译
+./docker/init.sh
+export LXC_TARGET_DEVICE=maple
+make all
+
+
+ICar android的代码仓库：
+repo init -u ssh://git.i-tetris.com/cores/gladius/android/manifest -b master -m chery/maple.xml --no-repo-verify --repo-url=ssh://git.i-tetris.com/repo --repo-branch=repo-1 --depth=1
+
+
+ICar 8538 预置应用，参考提交：
+http://jira.i-tetris.com/browse/MP-628
+https://git.i-tetris.com/c/cores/gladius/android/modules/+/829279
+https://git.i-tetris.com/c/qcom/qcm/android/device/mega/maple/+/826689 在源码目录：/home/huangyouchang/ssd2/maple_os/VENDOR.13.2.9/device/mega/maple
+https://git.i-tetris.com/c/apps/gladius/android/chery/s59d/apk_prebuilts/+/829260  在源码目录：/home/huangyouchang/ssd2/maple_os/QSSI.15/vendor/mega/prebuilts/mega_apps_s59d
+也可以参考最新的提交：http://jira.i-tetris.com/browse/MP-1103
+
+
+
+icar 8538 android15 
+adb shell 进入android
+android中执行：lxc-power1 adb host ，进入recovery模式
+
+然后再执行adb devices，输出：
+List of devices attached
+632bb335	recovery
+
+adb shell 再次进入android，执行 lxc-attach tbox-8538，进入tbox
+
+进入recovery 的adb ,然后 进入lxc-attach tbox-8538修改下 tbox ip，直接输入：
+ifconfig bridge0 192.168.1.30
+
+在recovery 启动后，在adb shell 下执行reboot bootloader，进到fastboot mode,然后命令：fastboot flash tbox_rootfs_a tbox_rootfs.img 单刷tbox
+然后 进入lxc-attach tbox-8538    ， ls  /etc/oemapp 看下有这个目录，说明刷刷成功了
+
+进入lxc-attach tbox-8538：
+使用ps -e | grep tsp 看下 tsp_service有没有起来，如果没有用systemctl start tsp_server.servcie 拉起来；
+使用ps -e | grep rvcs 看下 rvcs_manager，如果没起来 ，先执行systemctl status tsp_server.service，再systemctl start rvcs_manager.service拉起了
+ 
+
+
+adb recovery/android 互切：
+host切换到android：
+host adb下执行：lxc-power adb android
+Android切换到host：
+串口或者adb下执行：lxc-power1 adb host
+
+
+可以在tbox中发送消息：icebridge_tool -p "test2" -m "abcdefg"，在android中可以通过 msg_center_test -r "test2"接收消息
+
+输入：lxc-attach android，恢复成android，但是exit后，重新adb shell，进入的还是tbox，需要重启，然后adb shell才能进入android
+
+在android中可以 使用 msg_center_test -t "test2" "2"发送消息，在android中可以通过 msg_center_test -r "test2"接收消息
+
+
+
+
+ICar单独刷android：
+先编译android，make android
+然后进入：/home/huangyouchang/ssd2/maple_os/VENDOR.13.2.9/out/target/product/maple
+命令行执行：adb shell, lxc-power1 adb host,然后：adb shell， reboot bootloader，不用等待，
+在然后直接在/out/target/product/maple目录下运行：./flash_android.sh
+
+ICar单独编译某个模块：
+不需要执行：
+./docker/init.sh
+export LXC_TARGET_DEVICE=maple
+
+直接进入maple_os/VENDOR.13.2.9$ 
+执行source build/envsetup.sh 
+
+lunch
+选序号，比如42	
+然后编译，比如systemui，make CarSystemUI
+或者cd到 packages/apps/Car/SystemUI ，执行 mmm
+如果失败，重启电脑再试试
+产物：out/target/product/maple/system/system_ext/priv-app/CarSystemUI/CarSystemUI.apk
+推到：/system_ext/priv-app/CarSystemUI/CarSystemUI.apk，重启
+但是systemui起不来，报错了
+
+car_bottom_system_bar.xml
+
+
+单独编译 DvTest：
+直接进入maple_os/QSSI.15$
+执行source build/envsetup.sh 
+lunch
+需要输入：qssi-userdebug
+然后 make DvTest
+
+8295_OS/android/android/vendor/mega/packages/apps/DvTest
+maple_os/QSSI.15/vendor/mega/packages/apps/DvTest
+需要确认还要不要额外配置什么，确保系统能打包DvTest
+比如私有权限：https://git.i-tetris.com/c/qcom/qcm/android/device/mega/maple/+/855102
+
+
+
+icar，某个topic 
+2025-10-13 23:17:58.032  7905-7908  message_center          vendor.mega.msgcenter-service        D  send:108 DBG topic:ESC/HHC/FaultSts, payload len:9, payload:{value:1}
+2025-10-13 23:17:58.038  7905-7913  message_center          vendor.mega.msgcenter-service        D  dispatch_msg:311 DBG dispatch_msg topic:ESC/HHC/FaultSts, payload_len:9, payload:{value:1}
+有这个日志，说明分发成功
+板子启动后，需要先杀下msgcenter：adb shell killall vendor.mega.msgcenter-service，
+然后再使用msgcenter
+如果还不通，adb reboot 后adb shell killall vendor.mega.msgcenter-service，再试试
+
+
+
+
+QCM8538 switch烧录
+https://docs.google.com/document/d/164pSWk0OsEeUxVB1EUwcCV5leJksNpWMzUfj_J_MA5Q/edit?tab=t.0#heading=h.1z8l8k9ig7e7
+
+8538carservice修改后提交代码步骤：
+1.修改carserive的app仓库后，提交代码，记录Change-Id: I147e2a0f2996524186ce66984b1badeaf1a5cf78
+2.car-lib执行bundleReleaseAar,MapleCarService执行bundleReleaseAar,会分别在car-lib和MapleCarService的build目录下生成aar包
+3.访问gerrit：https://git.i-tetris.com/admin/repos/qcom/qcm/android/vendor/qcom/proprietary/mpltb（源码目录：QSSI.15/vendor/qcom/proprietary/mpltb），下载mpltb仓库，
+将第2步的两个aar包拷贝到mpltb目录下，分别改成名字：carext-lib.aar，carext-service.aar
+4.mpltb目录下version文件里，改成第1步记录的Change-Id
+5.提交mpltb仓库的变更
+
+8538carservice修改代码后怎么推包验证：
+1.先确认ICarSignal的信号的所有属性和表中 https://docs.google.com/spreadsheets/d/1NKdyTHxSURSPbD3obSLNk5JaEUeb3WL_mTChxYV-CBU/edit?gid=0#gid=0 是否完全对应
+2.仪表那边修改完成，并推包
+3.使用carservce打出来的aar，推包验证步骤：
+carext-lib改了的话,将carext-lib.aar拷贝到QSSI.15/vendor/qcom/proprietary/mpltb , 15的目录下 make android.car 编译 android.car.jar 推包到/system/framework/android.car.jar，它是个boot jar，推包重启验证，app进程启动会自动load这个jar
+carext-service是集成到跟着cores的carext service一起打包到 CarService，将carext-service.aar拷贝到QSSI.15/vendor/qcom/proprietary/mpltb, make CarService 编译CarService.apk然后推包重启验证
+
+如果只改了 car-lib里的代码，编译出carext-lib.aar就可以，不需要再编译carext-service.aar
+
+
+
+ICar的车设的包名和首页的activity
+com.mychery.carsettings
+com.mychery.carsettings.MainActivity
+
+过滤 CanManager-setSingleValue:FunctionValue  可以查看车设设置信号
 
 
 
