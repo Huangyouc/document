@@ -38,7 +38,6 @@ unity私有数据目录：
 
 
 
-
 gitdir=$(git rev-parse --git-dir); scp -p -P 29418 youchang.huang@git.i-tetris.com:hooks/commit-msg ${gitdir}/hooks/
 如果报错：
 subsystem request failed on channel 0
@@ -101,15 +100,6 @@ redwood:/system/priv-app/RedwoodCarService # sync
 redwood:/system/priv-app/RedwoodCarService # youchanghuang@ych-HP-ProBook:~/下载$ 
 
 
-
-apt基本命令：
-安装软件： sudo apt install [software] ；
-卸载软件： sudo apt remove [software] ；
-更新可用软件包： sudo apt update ；
-更新已安装软件包： sudo apt upgrade 。
-
-
-
 电脑上如何模拟信号发送进行调试：
 使用最新的 CherySomeIP，将板子刷成相应的SOC，准备好 以太网转接盒，
 根据read_me 和 多IP设定.docx文档 来配置，第一次要 sudo apt install vlan  
@@ -117,50 +107,6 @@ apt基本命令：
 sudo bash vlan_chery.sh
 最后在 someip_case目录下，执行  python3 display_gui.py  即可启动工具。
 
-
-ota升级包放在 com.mega.update，插上后自动拷贝升级
-
-adb remount
-
-意义：remount /system/, /etc/等路径的读写权限，使当前用户有权限读写设备中/system/, /etc/等路径下的文件。使用先必须先用adb root命令。
-
-常见问题： remount失败。
-
-解决方案： 如果adb remount 命令提示remount失败，则可以先运行adb disable-verity命令，然后重启设备，最后再使用root和remount命令。
-
-adb disable-verity
-adb reboot
-adb root
-adb remount
-
-
-
-
-git reset --soft HEAD^
-
-
-当本地提交和远端提交出现冲突的时候：（这只是一种思路）
-将本地重置到远端上一个提交：
-git reset HEAD~1
-git status
-git pull
-git reset --hard HEAD~2
-git pull
-git stash pop
-git status
-然后看看是否需要重新提交
-
-
-
-使用QFIL刷SOC
-拿到串口线，按住短接口进行上电，
-SelectPort 9008 
-Load Content 到选中的soc的根目录，选中 qfi_bin/Content文件
-Select Programmer  选中下载的qfi_bin/boot_8155/boot_images/QcomPkg/SDMPkg/855/Bin/AU/RELEASE/prog_firehose_ddr.elf
-最后：Download Content
-
-
-文件管理器，比如windows随便打开一个文件夹，左上角输入这个地址：\\10.58.50.10，然后输入帐号:share，密码:share，可以进入公司的共享文件目录
 
 
 灯光效果，过滤点击事件，位置灯信号接受，给unity发的消息：
@@ -192,17 +138,6 @@ sudo wireshark 启动
 someipsd.entry.serviceid==0xa701
 过滤出来后，即有Offer，又有Subscribe 和 SubscribeAck，这是一个完整的牵手过程，说明这个服务正常的。
 
-
-如果没有权限编辑文件：
-sudo chmod a+w /etc/ssh/ssh_config
-
-ubuntu系统文件夹提示：不是所有者，所以没有更改权限
-假设您的用户名是 user123，您想获取 /opt/test_app 文件夹的权限
-sudo chown -R user123:user123 /opt/test_app
-
-
-如果没有权限删除文件：
-sudo rm -rf sdk2
 
 
 运行git remote列出现有的远程，并查看其名称和URL：
@@ -239,58 +174,9 @@ sudo service gdm3 restart
 然后重启电脑
 
 
-someip信号的网络：
-adb shell
-logcat | grep TMS_ 可以过滤输入信号
-TMS_是输入信号的前缀
-既可以过滤输入，也可以过滤输出
-logcat | grep TMS_Mode_Front
-logcat | grep eHMI_BlowFace
-
-
-实车上抓SOMEIP日志
-adb root 
-adb remount
-adb  shell
-cd data/
-mkdir debug
-cd debug
-tcpdump -i eth0.62 -w  xxxx.pcap     (xxxx是文件的名字最好命名为车号加日期，如PT105_1223.pcap)
-
-操作UI，操作完之后，CTRL+C 结束监听信号。
-退出adb shell
-adb pull /data/debug/xxxx.pcap 
-
-全量报文：
-adb shell
-telnet cdc-qnx
-root
-cd ota/android
-
-tcpdump -vv -w all.pcap
-抓完后按ctl+C停止抓报文，再通过adb取下来报文
-
-adb pull /ota/qnx.pcap
-
-
-
 E0X如何在 as的日志里过滤出输入信号：
 RedwoodSomeIpProperty
 并使用 No Filters
-
-
-怎么抓仪表的pcap日志：
-adb  root
-adb pull qlog .（不确定最后这个 . 是否必须，不加. 也能导出）
-抓仪表日志，应该还有其他的方式，比如：（本人没试过）
-adb shell
-telnet cdc-qnx
-root
-tcpdump -i vlan62 -w xxx.pacp
-cp xxx.pacp /ota/android
-exit 
-exit
-adb pull /ota/xxx.pcap
 
 
 
@@ -690,14 +576,6 @@ bytes) bytes)
 
 系统集成apk，启动报错：so dlopen，解决方案：https://docs.google.com/document/d/1n2-A9btZv-QZpvyoy91UyVXR7fojKRilX2Q34-06CSE/edit?tab=t.0#heading=h.2okknt7574gu
 
-
-
-使用Deepin-Wine安装企业微信（优化更好）
-wget -O- https://deepin-wine.i-m.dev/setup.sh | sh
-sudo apt update
-sudo apt install com.qq.weixin.work.deepin
-
-
 公司的自己的网盘地址：
 https://mega-disk.megatronix.com/apps/files/?dir=/&fileid=480225  域账号
 
@@ -773,13 +651,6 @@ sudo su
 赋予当前文件夹全部权限
 
 cp -R opt/ /abc  将opt拷贝到 abc文件夹下
-
-
-
-
-查看当前板子上window 有哪些
-adb shell dumpsys window windows > 1.txt
-在1.txt这个文件中，通过  Window #可以找到具体的包名
 
 adb shell am force-stop com.lion.media 可以杀掉这个包名对应的进程
 
@@ -880,12 +751,6 @@ QNX负责判断长按和短按，并封装键值，传给各个模块；
 Android和仪表负责接收键值并响应
 
 
-
-ubuntu 预览webp图片
-sudo add-apt-repository ppa:helkaluin/webp-pixbuf-loader
-sudo apt update
-sudo apt install webp-pixbuf-loader
-
 三方应用调用系统api，可能会调用不到，需要在
 AndroidManifest.xml加上  android:sharedUserId="android.uid.system"，配置成系统应用
 
@@ -908,19 +773,8 @@ seLinux权限问题，需要总结起来
 打开终端，直接 history | grep abcd  可以过滤出，以前历史使用的adb命令
 
 
-
-
 如果板子运行软件，无法debug，用cat /etc/version 看下软件是userdebug还是user版本。user版本无法debug。或者重启自己的电脑试试
 
-
-
-8295 ota升级失败的解决方案，执行adb enable-verity,然后进入qnx：mount -uw /mnt/，然后在qnx下 执行reset。 然后不要执行adb root，直接ota升级。
-如果还是ota失败，先恢复出厂设置，再执行上诉步骤。
-
-
-8295不用小板，线刷升级：
-直接输入adb root && adb shell msg_center_test -t uartrpc_svc/general_ctrl/req '~!b:0x7f0x080x900x080x90' && adb shell msg_center_test -t uartrpc_svc/general_ctrl/req '~!b:0x7f0x080x900x080x08'
-然后用qfile刷
 
 
 user 版本需要 install apk 的时候，需要先启动 root 权限。
@@ -974,8 +828,7 @@ https://www.cnblogs.com/satire/p/16590170.html
 
 一般系统应用，system或者vendor下面的，都有权限在sdcard里读写。
 
-如果一个文件无法被复制，提示没有权限，可以这样：
-sudo chmod 777 aaa.pcap
+
 
 使用voy_ut工具，写三码数据到板子里：
 adb root;adb remount 
@@ -1041,7 +894,7 @@ msg_center_test -t uartrpc_svc/uds/req '~!b:0x030x010x000x0f0x010x0e0x800x2e0xf1
 可以看到分支合入了哪些代码：
 branch:release/redwood_hqx.1.2.1_20230410 status:merged
 
-chmod a+x a.txt 意识是给所有用户，a.txt的执行权限。
+
 power
 notepad安装
 sudo snap install notepad-plus-plus
@@ -1195,9 +1048,6 @@ logcat | grep SomeIp 过滤someip信号
 adb启动 carsettings提供的contentprovider
 adb shell content call --uri content://com.mega.carsettings.unity --method get_car_color --arg com.mega.carsettings
 
-git branch -vv 查看本地分支指向的远端分支是啥
-
-git branch -d 分支名 删除分支，前提是本地要切换到这个分支以外的分支
 
 Ubuntu下安装adb和fastboot方法如下：
 
@@ -1221,11 +1071,6 @@ python3 fastboot_complete.py --pf=8155_la --st=ufs
 上面刷机脚本执行完以后，系统不会自动重启，需要执行reboot命令：
  fastboot reboot
  
-使用qfile刷机，出现qfile和主机一会断开一会连上的情况：
-1.主机彻底断电，等5分钟后再上电
-2.小板子，按钮按住10s以上
-
-
 
 https://mastergo.com/
 点击右上角的设计文件，
@@ -1263,14 +1108,6 @@ ifshefei
 
 android源码目录：
 android/frameworks/base/core/java/android/
-
-过滤当前window：
-adb shell dumpsys window
-
-过滤当前上层的actvity：
-adb shell "dumpsys activity | grep mResumedActivity"
-
-
 
 
 https://apps.microsoft.com/store/detail/%E4%B8%B2%E5%8F%A3%E8%B0%83%E8%AF%95%E5%8A%A9%E6%89%8B/9NBLGGH43HDM?hl=zh-cn&gl=cn&cid=ifdef
@@ -1495,8 +1332,7 @@ reboot
 
 grep -rn "abcd"  可以从当前目录中过滤出abcd字段。
 
-查看某个app的version：
-adb shell pm dump com.lion.media |grep -i "version"
+
 
 user版本强制安装apk
 安装apk，可以使用 adb isntall -r -t apk
@@ -1692,10 +1528,7 @@ https://blog.csdn.net/wds1181977/article/details/45914489
                    
 日志过滤  LionMediaSlicePr  可以看到雄狮给额媒体的播放状态
 
-抽空看看公司的开发文档，学习使用，特别是新入职的同学，比如
-app 性能优化的文档
-https://docs.google.com/document/d/1EJdZO0Yr_oKjfWqz6Kha1uvzpUJSEoBAiTwrlkaWX40/edit#heading=h.8xotg6t3vyhs
-https://docs.google.com/document/d/1iG3OUNwHTYuOFT1Q5RhWDzogcHDpwH2tmVPSjHQDmYQ/edit#heading=h.1z8l8k9ig7e7
+
 
 各模块的介绍和架构设计：
 https://drive.google.com/drive/u/0/folders/12ZlxxuFww_kOmCjJThnPWkW-mOLS_488         
@@ -1766,7 +1599,6 @@ private Observer<Slice> mSliceObserver = new Observer<Slice>() {
 
 
 
-
 重启关键字：Booting
 会有如下打印：
 Booting Linux on physical CPU 0x0000000000 [0x410fd4c0]
@@ -1780,61 +1612,12 @@ ActivityManager: User 0 state changed from BOOTING to RUNNING_LOCKED
 am_proc_died 可以看到死亡进程
 
 
-查看某个apk版本：
-adb shell "dumpsys package com.mega.carsettings |grep versionName"
 
 单个进程的CPU/内存：
 adb shell
 top -H -p pid(top 可以看应用的pid)
 
 adb shell top 查看所有CPU/内存
-
-
-adb shell
-dumpsys SurfaceFlinger
-白天黑夜来回点
-出来的日志里搜索：GraphicBufferAllocator
-GraphicBufferAllocator buffers:
-0xb400007858c8cfb0: 15840.00 KiB | 2560 (2816) x 1440 |    1 |        1 | 0x933 | SurfaceView - HvacPanel#4
-0xb400007858c8d0d0: 14400.00 KiB | 2560 (2560) x 1440 |    1 |        1 | 0x1a00 | FramebufferSurface
-0xb400007858c8d3a0: 14400.00 KiB | 2560 (2560) x 1440 |    1 |        1 | 0x10000900 | HvacPanel#0
-0xb400007858c8d790: 1560.00 KiB |  800 ( 832) x  480 |    1 |        1 | 0x1a00 | FramebufferSurface
-0xb400007858c8dee0:    0.25 KiB |    1 (  64) x    1 |    1 |        1 | 0x10000900 | #2
-0xb400007858c8e6c0:   11.00 KiB |   15 (  64) x   44 |    1 |        1 | 0x203 | RegionSamplingThread
-0xb400007858c8e900:    0.25 KiB |    1 (  64) x    1 |    1 |        1 | 0x300 | placeholder
-0xb400007858c8eab0: 1096.00 KiB | 1024 (1024) x  274 |    1 |        1 | 0x1a00 | FramebufferSurface
-0xb400007858c8f050: 15840.00 KiB | 2560 (2816) x 1440 |    1 |        1 | 0x933 | SurfaceView - HvacPanel#3
-0xb400007858c8f290: 14400.00 KiB | 2560 (2560) x 1440 |    1 |        1 | 0x1a00 | FramebufferSurface
-0xb400007858c8f5f0:  770.00 KiB |  435 ( 448) x  440 |    1 |        1 | 0x10000900 | #3
-0xb400007858c8fef0: 1560.00 KiB |  800 ( 832) x  480 |    1 |        1 | 0x1a00 | FramebufferSurface
-0xb400007858c900a0: 1200.00 KiB | 2560 (2560) x  120 |    1 |        1 | 0x10000900 | TopCarSystemBar#0
-0xb400007858c902e0: 1096.00 KiB | 1024 (1024) x  274 |    1 |        1 | 0x1a00 | FramebufferSurface
-0xb400007858c90370: 1200.00 KiB | 2560 (2560) x  120 |    1 |        1 | 0x10000900 | TopCarSystemBar#0
-0xb400007858c90490: 1096.00 KiB | 1024 (1024) x  274 |    1 |        1 | 0x1a00 | FramebufferSurface
-0xb400007858c906d0: 14400.00 KiB | 2560 (2560) x 1440 |    1 |        1 | 0x10000900 | com.mega.carsettings/com.mega.carsettings.CarSettingActivity#0
-0xb400007858c90910: 1560.00 KiB |  800 ( 832) x  480 |    1 |        1 | 0x1a00 | FramebufferSurface
-0xb400007858c90d00: 14400.00 KiB | 2560 (2560) x 1440 |    1 |        1 | 0x1a00 | FramebufferSurface
-0xb400007858c90d90: 15840.00 KiB | 2560 (2816) x 1440 |    1 |        1 | 0x933 | SurfaceView - HvacPanel#2
-0xb400007858c91720: 1200.00 KiB | 2560 (2560) x  120 |    1 |        1 | 0x10000900 | TopCarSystemBar#0
-0xb400007858c91a80: 15840.00 KiB | 2560 (2816) x 1440 |    1 |        1 | 0x933 | SurfaceView - com.mega.carsettings/com.mega.carsettings.CarSettingActivity#0
-0xb400007858c920b0:    0.25 KiB |    1 (  64) x    1 |    1 |        1 | 0x10000900 | #1
-0xb400007858c92530: 1280.00 KiB | 2560 (2560) x  128 |    1 |        1 | 0x10000900 | BottomCarSystemBar#0
-0xb400007858c93610: 1096.00 KiB | 1024 (1024) x  274 |    1 |        1 | 0x10000900 | com.mega.redwoodhvac/com.mega.redwoodhvac.view.behind.BehindActivity2#0
-0xb400007858c938e0: 14400.00 KiB | 2560 (2560) x 1440 |    1 |        1 | 0x10000900 | com.mega.carsettings/com.mega.carsettings.CarSettingActivity#0
-0xb400007858c93a00: 15840.00 KiB | 2560 (2816) x 1440 |    1 |        1 | 0x933 | SurfaceView - HvacPanel#1
-0xb400007858c94780: 1280.00 KiB | 2560 (2560) x  128 |    1 |        1 | 0x10000900 | BottomCarSystemBar#0
-0xb400007858c94c00:  770.00 KiB |  435 ( 448) x  440 |    1 |        1 | 0x10000900 | #3
-0xb400007858c94db0: 14400.00 KiB | 2560 (2560) x 1440 |    1 |        1 | 0x10000900 | com.mega.carsettings/com.mega.carsettings.CarSettingActivity#0
-0xb400007858c94ff0: 1096.00 KiB | 1024 (1024) x  274 |    1 |        1 | 0x10000900 | com.mega.redwoodhvac/com.mega.redwoodhvac.view.behind.BehindActivity2#0
-0xb400007858c957d0: 14400.00 KiB | 2560 (2560) x 1440 |    1 |        1 | 0x10000900 | HvacPanel#0
-0xb400007858c95ce0: 1280.00 KiB | 2560 (2560) x  128 |    1 |        1 | 0x10000900 | BottomCarSystemBar#0
-0xb400007858c95d70: 1096.00 KiB | 1024 (1024) x  274 |    1 |        1 | 0x10000900 | com.mega.redwoodhvac/com.mega.redwoodhvac.view.behind.BehindActivity2#0
-0xb400007858c960d0: 14400.00 KiB | 2560 (2560) x 1440 |    1 |        1 | 0x10000900 | HvacPanel#0
-0xb400007858c96160:    0.25 KiB |    1 (  64) x    1 |    1 |        1 | 0x10000900 | #2
-Total allocated by GraphicBufferAllocator (estimate): 229048.00 KB
-从上面日志看出：SurfaceView - HvacPanel 这个东西的id一直在增加，所以泄漏了；BehindActivity2 的id就没有增加，说明没泄漏。
-
-
 
 
 adb shell am dumpheap 包名
@@ -1994,10 +1777,6 @@ adb: failed to install RedwoodCarSettings.apk: Failure [INSTALL_FAILED_TEST_ONLY
 
 grep -rn "abcd"  可以从当前目录中过滤出abcd字段。
 
-查看某个app的version：
-adb shell pm dump com.lion.media |grep -i "version"
-adb shell pm dump com.holomatic.holoavm |grep -i "version"
-
 
 
 还有一种方案：不要动效，使用静态图片
@@ -2043,12 +1822,6 @@ version name: 可以过滤出部分生态应用初始化时打印的应用的版
 Binder.getCallingPid() 获取当前方法是哪个跨进程调用的
 
 
-huangyouchang@huangyouchang:~/下载$ free
-              总计         已用        空闲      共享    缓冲/缓存    可用
-内存：    65614736    11248460      501848      863916    53864428    52777844
-交换：    33554428       18432    33535996
-或者free -h
-
 
 遇到这种日志：
 	Line  44324: 11-13 15:16:21.329886 31834 31834 F DEBUG   : backtrace:
@@ -2089,44 +1862,6 @@ e  44114: 11-13 15:16:21.226246 31834 31834 F DEBUG   : Build fingerprint: 'Mega
 
 测试提的tombstones日志在 device_crash/data/ 
 tombstones的单子，要下载 tombstones 日志
-
-
-
-
-qnx 内存不够的时候会dump：在pmemtbl_control.txt文件中
-pmem table dump: total entries=2653, total size alloc'd=572522416(0x221fffb0), time=10247925.00ms
-RGS release: 0x74718000, GMU FW release: 0x30000012
-
-index process name host pid total size(bytes) peak size(bytes)
-0 kgsl 49204 14073856 14094336
-3 secure memory 49204 8847360 8847360
-5 ais_server 49203 790568 790568
-7 ivi_compositor 1761387 43135056 43192400
-8 screen 49195 69714040 108605560
-13 ic_whud 1847413 74272848 74895440
-14 ic_adas 1843316 174063696 174325840
-15 avm_app 2220175 299118672 305446992
-45 android.hardwar 23740477 790528 790528
-47 surfaceflinger 23744578 2362380288 6352863232
-49 droid.launcher3 23793746 129318912 208052224
-51 ndroid.systemui 23793762 43343872 51372032
-55 hery.controller 23830653 14667776 15720448
-57 icerelayservice 23834817 5111808 5111808
-59 om.iflytek.xiri 24010960 11288576 11288576
-110 ega.redwoodhvac 58577147 96804864 110931968
-122 om.mega.carplay 70017107 5111808 5111808
-
-133 com.mega.phev 70689088 3779031040 3828666368
-
-134 fly.sceneengine 72413507 5111808 5111808
-136 ega.carsettings 76157072 57925632 74145792
-137 Binder:1228_3 76218701 4841472 4841472
-可以看到phev KGSL消耗了3.8G，有问题。
-
-
-
-
-
 
 
 可见即可说，没有反应，可以通过日志检索：AppStatusManager 查看viewCmd 里有没有 view的文本
@@ -2170,20 +1905,6 @@ linux-generic/focal-updates,focal-security 5.4.0.169.167 amd64
 然后执行 sudo apt-get install linux-generic-hwe-20.04 可以更新内核
 
 
-
-ubuntu 在文件 > 其他位置 右下角访问 地址：smb://10.57.50.238/multi_pipeline_demo/f5a0426885d3468382f58e2124bd5fb9/0/1/test_HUIFANGsomeipSUIJIBAOWEN_1689846888176652290_1689846888176652290/6/device_crash
-报错：挂在windows共享失败
-解决：
-sudo apt install gvfs-backends
-然后在连接 smb://10.57.50.238/
-需要密码，选择已注册用户，用户名和密码都写 share。
-如果不小心写错了用户名或者密码，重启电脑重新连接配置。
-然后可以把文件拷贝到自己电脑
-
-windows电脑可直接浏览器访问：\\10.57.50.238\multi_pipeline_demo\8ae209b87ffe4d3faa990f1811a13d99\hprof\5c60bae3714b\com.mega.carsettings
-
-
-
      
 0y双色氛围灯：1 4 6 9 10     和  3  7 8  12 13 是两种颜色        1 4 6 9 10（上光源） 3  7 8  12 13(下光源)
 
@@ -2224,10 +1945,6 @@ value值含义：
 EO3 = 0;
 EOY = 1;
 EH3 = 2;
-
-
-
-
 
 1. //这个是开门的开度值，不能作为车门是否打开的判断
 ID_DOOR_SET_POSITION_FLL(Signal.ID_DOOR_CURRENT_POSITION, FRONT_LEFT）
@@ -2275,20 +1992,8 @@ A4038004
 然后执行脚本 adb shell redwood_car_input_test.sh -k 7 -t 300
 
 
-
 连接can信号分析的电脑：终端输入：
 xfreerdp /u:youchang.huang /p:Aa123456 /dynamic-resolution /v:10.56.1.238
-
-
-MAT分析内存工具：
-https://www.jianshu.com/p/4321d4780629
-
-工具见桌面文件夹MemoryAnalyzer
-加压后点击 MemoryAnalyzer
-然后进入本地文件 opt/sdk/platform-tools/ 
-先dump内存文件：adb shell am dumpheap com.demo.micolauncher /data/local/tmp/test.hprof，将test.hprof下载到本地
-执行：hprof-conv test.hprof converted-test.hprof
-使用MemoryAnalyzer 打开 converted-test.hprof
 
 
 和指令 simpleperf record -g -o /data/local/tmp/perf_vehicle.data --duration 30 -p pid 一起使用，分析cpu
@@ -2393,10 +2098,6 @@ E0Y PHEV车型，release分支已经拉出来了，0307分支，月底sop，有0
 
 android启动后的日志打印：
 I SystemServer: Entered the Android system server!
-
-
-
-
 
 
 app运行内存，主要是由3d车模和图片消耗。
@@ -2553,12 +2254,6 @@ xdg-open . 可以使用文件打开当前的文件的目录
 
 
 
-adb shell dumpsys
-
-DUMP OF SERVICE wallpaper:
-mDefaultWallpaperComponent=ComponentInfo{com.mega.carmodel/com.mega.carmodel.UnityWallpaperService}  看到DefaultWallpaper 就是 设置的UnityWallpaperService
-
-
 8295权限目录：/system/etc/permissions/privapp-permissions-rocky.xml
 8295 systemui权限目录：/system/etc/permissions/com.android.systemui.xml
 
@@ -2712,9 +2407,6 @@ android:persistent="true"
     如果main中AndroidManifest有的配置，rocky 的AndroidManifest中没有，则rocky会集成main，也有这个配置，比如<uses-permission android:name="android.car.permission.CAR_POWER" />
 
 
-
-
-
 能源管理和导航分屏：
  Bundle bundle = new Bundle();
         bundle.putString("split_enter_main_pkg","com.mega.phev");
@@ -2751,9 +2443,6 @@ https://docs.google.com/document/d/17zfjWHHIKFBoRdTzU5NZ6mgzFDZ7Idnpiak_qX0SMrw/
 
 大家如果使用slave拉取代码的时候，如果push不上去，提交代码时配置下push url：
 git remote set-url --add --push mega ssh://git.i-tetris.com/apps/gladius/android/chery/e0x/RedwoodCarSettings
-
-adb shell dumpsys wallpaper
-adb shell dumpsys display 把dump结果输出到文件里发我看看，是不是display 5 的display属性有问题
 
 
 V25项目，奇瑞uiue稿，https://www.figma.com/
@@ -2843,13 +2532,6 @@ source build/envsetup.sh
 lunch 12
 make RedwoodPermissionGranter
 8295_OS_FL/android/android/vendor/mega/packages/apps/RedwoodPermissionGranter
-
-
-使用杰哥的硬盘：
-huangyouchang@hyc-pc:~/hycccc/8295_OS_FL$ sudo mkdir /mnt/smb_share
-huangyouchang@hyc-pc:~/hycccc/8295_OS_FL$ sudo mount -t cifs -o username=hongjie,password=hongjie //10.56.1.205/Shared /mnt/smb_share
-huangyouchang@hyc-pc:~/hycccc/8295_OS_FL$ cd /mnt/smb_share/
-huangyouchang@hyc-pc:/mnt/smb_share$ xdg-open .
 
 
 
