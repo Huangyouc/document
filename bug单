@@ -1,0 +1,1012 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+通过android代码去寻找usb串口，android和usb串口通信案例：
+http://jira.i-tetris.com/browse/MP-1069
+两个绿色的usb小板，GND直接相接，TX和RX线对换接
+
+
+
+点击事件分发问题：辛建建  http://jira.i-tetris.com/browse/RK-36413
+InputDisatcher
+
+
+重启后首次点击车辆设置，出现黑色背景
+引擎初始化已经完毕，在最终将要执行changesurface进行界面刷新时，无法分配内存，现在已经优化过了uneal内存，大概峰值在900mb左右。
+内部：http://jira.i-tetris.com/browse/RK-16076
+外部：http://52.80.87.177:8080/browse/RK-12776
+
+
+驾驶模式界面，滑动界面出进度条，进度条显示不流畅（视觉效果上有回弹）
+http://jira.i-tetris.com/browse/RW-67685
+BasePrefListFragment 中设置的滑动条，高度写成550dp R.drawable.recycleview_scrollbar，
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:width="7dp"
+        android:top="70dp"
+        android:height="550dp">
+        <shape>
+            <solid android:color="@color/recycleview_scrollbar_color" />
+            <size
+                android:width="@dimen/dimen_7dp"
+                android:height="550dp" />
+            <corners android:radius="@dimen/dimen_4dp" />
+        </shape>
+    </item>
+</layer-list>
+
+
+
+内部：http://jira.i-tetris.com/browse/RK-18747
+外部：http://211.159.155.78:8080/browse/RK-15046
+中英文切换的时候，onVisibilityChanged这个会先是false，然后变成true，可见性发生变化，导致闪烁
+由于车模是渲染在Surface上的，中英文切换，系统会先回调onVisibilityChanged，将可见性置为false，也就是不可见状态，随后马上置为true，即可见状态。
+所以看起来会闪一下。
+目前没有办法解决此问题。鉴于 很少有人会去切换中英文，并且 在桌面去语音切换中英文  的场景比较少见，对用户影响不大，所以 此问题不做处理。
+
+
+8295 bev  语音调节座椅到最前，tts反馈没问题，实际未调节
+内部：http://jira.i-tetris.com/browse/RK-32291
+外部：http://211.159.155.78:8080/browse/RK-26508
+有详细的pcap分析
+
+
+蓝牙音乐重新上电后不恢复播放
+内部：http://jira.i-tetris.com/browse/RK-38643
+外部：http://211.159.155.78:8080/browse/RK-31578
+
+
+
+
+进入车辆设置界面闪现闪烁闪屏3D车模
+内部：http://jira.i-tetris.com/browse/RK-37404
+外部：http://211.159.155.78:8080/browse/RK-30408
+车模作为最底层视图，有的应用需要展示车模，有的应用不需要，在各个应用和首页车模来回切换的时候，车模总会要显示和隐藏来回切换。
+技术上无法避免来回切换，闪一下车模。
+鉴于对实际功能无影响，此类问题不做修改，维持现状。
+底层原理：
+关于壁纸窗口的管理，WindowManagerService负责计算壁纸窗口的Z序和可见性。
+壁纸窗口（TYPE_WALLPAPER）的Z序计算方式与其他窗口不同，它会根据其他窗口的FLAG_SHOW_WALLPAPER标记情况不断调整。
+
+
+非车模页面，切换黑夜白天模式，进入车辆设置闪屏/闪烁
+内部：http://jira.i-tetris.com/browse/RK-53255
+外部：http://211.159.155.78:8080/browse/RK-41690
+车设是以3d车模为背景。
+当切换到其他应用，车模不可见状态，由于性能要求，车模不可见时，需要暂停渲染；所以此时切换黑夜模式，消息发给车模，车模无法做到及时处理。等车设回到前台，车模可见时，才会处理从白天到黑夜的变换。
+所以会看到闪一下。
+鉴于对实际功能没有影响，加上性能限制，技术上也无法继续优化，所以维持现状。
+
+
+
+
+
+http://jira.i-tetris.com/browse/RK-57815
+android.os.DeadSystemRuntimeException: android.os.DeadSystemException
+at android.view.inputmethod.InputMethodManager.removeImeSurface(InputMethodManager.java:2651)
+at android.view.ImeInsetsSourceConsumer.removeSurface(ImeInsetsSourceConsumer.java:150)
+at android.view.InsetsSourceConsumer.setControl(InsetsSourceConsumer.java:185)
+at android.view.ImeInsetsSourceConsumer.setControl(ImeInsetsSourceConsumer.java:157)
+at android.view.InsetsController.onControlsChanged(InsetsController.java:887)
+at android.view.ViewRootImpl$ViewRootHandler.handleMessageImpl(ViewRootImpl.java:5739)
+at android.view.ViewRootImpl$ViewRootHandler.handleMessage(ViewRootImpl.java:5693)
+at android.os.Handler.dispatchMessage(Handler.java:106)
+at android.os.Looper.loopOnce(Looper.java:201)
+at android.os.Looper.loop(Looper.java:288)
+at android.app.ActivityThread.main(ActivityThread.java:7918)
+at java.lang.reflect.Method.invoke(Native Method)
+at com.android.internal.os.RuntimeInit$MethodAndArgsCaller.run(RuntimeInit.java:553)
+at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:946)
+Caused by: android.os.DeadSystemException
+系统级异常，表示 Android 系统本身正在或即将关闭/重启。
+不是应用的bug。这是测试环境下的系统稳定性问题。
+解决方案：
+1. 忽略：在测试脚本中捕获并跳过。
+2. 调整测试：降低测试强度，增加延迟，更换更强设备。
+
+
+
+
+插入u盘，进入车辆设置异常卡滞后闪退
+http://jira.i-tetris.com/browse/RW-43054
+
+氛围灯自动关闭车头、车门灯光，点击切换氛围灯、关闭/打开氛围灯恢复正常【偶现】
+http://jira.i-tetris.com/browse/RW-43098
+首次上电开启双色氛围灯，仪表台灯光不亮，水杯盒灯光亮，切换双色氛围灯模式，灯光正常
+http://jira.i-tetris.com/browse/RW-42983
+
+
+http://52.80.87.177:8080/browse/RW-61980
+数字钥匙点击解冻，云端冻结，icc再点击解冻，由于icc连续两次点击同样的卡片的冻结，VCC处理的逻辑认为短时间内相同信号会被抛弃，不进行处理。
+如果是在ICC点击解冻，icc点击冻结，ICC点击解冻，是ok的，因为每次信号不一样，vcc会做处理。
+
+
+
+ //RW-50352 RW-50957  删除delete操作，防止unity创建文件导致死锁导致anr
+//        FileUtil.deleteFolder(Constant.FILE_PATH_UNITY);
+        //不删除文件，会导致偶现车辆设置启动后有白色弹框，点击后车辆设置被杀;
+        // 这里设置一个系统属性，fwk在启动后检查这个属性，
+        // 为true，就是给文件Constant.FILE_PATH_UNITY 777的权限（所有用户）
+        
+车辆设置性能优化task  http://jira.i-tetris.com/browse/RW-41366
+
+
+ Unable to get provider com.mega.carsettings.provider.SequoiaBrightnessSliceProvider: java.lang.SecurityException: Failed to find PID 2405
+ http://jira.i-tetris.com/browse/RW-52996
+参考：https://blog.csdn.net/lanmengfenghe/article/details/105162939
+
+
+【E0Y增程】【车辆设置】【005】【0405】英文模式多次切换车辆设置内页面，车灯界面车模卡滞
+内部：http://jira.i-tetris.com/browse/RW-62780
+外部：http://52.80.87.177:8080/browse/RW-70006
+回退 对hideunity的延迟操作，此延迟会造成unity生命周期错乱，不可控。
+
+
+[台架]压测，发送Enh_SeatSW_FL.notifySeatNeedMemory=1,没有显示主驾座椅调节的弹框
+http://jira.i-tetris.com/browse/RW-57915  
+当发1,此时车辆设置 处于 方向盘电动调节弹框、后视镜电动调节弹框、座椅调节界面 这三个页面其中之一，则不会弹出主驾座椅记忆的弹框。
+自动测试脚本会后续会再发一次1,但是Carservice的这个信号，必须是跳变后才会上报给应用层，导致后续的1无法传递给应用层，所以车辆设置后续也无法弹出主驾座椅记忆的弹框。
+
+
+
+
+个人中心界面，返回至车辆设置驾驶界面，车模位置闪屏
+内部：http://jira.i-tetris.com/browse/RW-73685
+外部：http://52.80.87.177:8080/browse/RW-77157
+驾驶页面车模有长方形背景，设计方面不建议去掉这个背景。在从其他页面返回到车辆设置，系统自带效果，会闪一下这个背景。
+解决方案有两种：
+1.全屏使用车模，就不会出现这个长方形的阴影。缺点：车模cpu占用很大
+2.去掉驾驶页面这个车模的背景，但是设计不愿意去掉。
+鉴于以上原因，此问题暂不修改。
+
+
+
+在桌面语音关闭氛围灯，在进入车辆设置APP氛围灯页面实车氛围灯会自动在开启，页面开关为关闭状态(之前开启了音乐律动)
+RW-57752
+        
+无极调色氛围的后实车氛围灯颜色与中控氛围的内不一致
+http://jira.i-tetris.com/browse/RW-58769   
+动态氛围灯开启状态，无极调色不作用于动态氛围灯。
+此处是正常需求实现，非问题。
+可以尝试，把动态氛围灯关闭后，再拖动 无极调色。
+
+全词匹配处理，前后加&符号,比如氛围灯的处理：
+内部：http://jira.i-tetris.com/browse/RW-61440
+外部：http://52.80.87.177:8080/browse/RW-69196
+文本用：<string name="menu_atmosphere">氛围灯</string>
+可见即可说用：  <string name="menu_atmosphere_content_description">&amp;氛围灯&amp;</string>
+但是上面这个方案，实时下来，不行，已转语音组处理。
+
+调节氛围灯亮度高低无任何反应
+内部：http://jira.i-tetris.com/browse/RW-59253
+外部：http://52.80.87.177:8080/browse/RW-67970
+当前处于音乐律动模式。按照需求，音乐律动模式下，不能调整亮度
+
+语音无播报,声音无法调节
+内部：http://jira.i-tetris.com/browse/RW-75647
+外部：http://52.80.87.177:8080/browse/RW-78218
+版本： E0Y增程0606冻结版本
+场景：车机处于STR状态，用户刷卡解锁，等1到2分钟之后再开门，上车
+恢复办法：重启；或者锁车待休眠后，解锁立即（1分钟内）开门上车
+
+历史：4月份科络达测试OTA升级，OTA升级过程中，有重启，讯飞会播报开机欢迎语，要求禁止tts语音。5月份系统方实施，引入bug
+
+原因：
+1. 每次解锁车辆，从STR状态退出时，科络达app会杀进程，进程大概1分钟重启完成，然后会发送OTA退出消息
+2. 系统方收到OTA退出消息后，判断当前电源状态是关门STANDY，会调用 OTA-tts静音
+3. 在开门后，调用了 POWER-取消静音，POWER取消静音这个操作无法对OTA-tts静音解禁，所以出现问题。
+
+上述原因1中，在科络达app重启完成之前开门，就不会触发2和3，也就没问题。
+
+修复办法：
+1. 系统方收到OTA退出消息，不管什么电源状态都不禁tts
+或者 2. 科络达app不要每次上电都发OTA退出消息。
+
+
+
+
+
+e03的动态氛围灯只有关闭和律动选项，按照需求是 关闭/静态/呼吸/流光模式。原因：选中了音乐律动。
+内部：http://jira.i-tetris.com/browse/RW-59901
+外部：http://52.80.87.177:8080/browse/RW-68313
+
+
+
+在空调界面切换中英文时，闪黑屏
+内部：http://jira.i-tetris.com/browse/RK-39002
+外部：http://211.159.155.78:8080/browse/RK-31819
+目前Android的设计，就是当前focuse display是哪个屏，切换中英文是就会冻结哪块屏，当前操作后排屏，然后通过语音控制切换中英文，focus display在后排屏，冻结的只是后排屏
+中控屏不会冻结，所以出现闪黑（activity会重新创建），这属于正常现象，目前没有很好的方案解决。
+另外，这种场景也比较少，很少有用户如此操作，操作空调，然后马上通过语音去切换中英文，google原生的设计，没有很好的方案做修改，不建议做修改。	
+google issue，无修改方案，建议保持现状。
+
+
+
+和廖丽芬、周倪青确认：
+国际联网的手套箱功能和国内策略一样；
+国际非联网的手套箱，不需要密码，也不用在 整车设置里展示 “电动手套箱密码” 这个开关；点击常用界面的手套箱按钮，直接打开手套箱。
+RW-41740
+国际是否联网版本，根据配置字：Lion 人工智能系统 配置字值是否为1   LION_INTELLIGENT_SYSTEM
+
+
+
+内部：http://jira.i-tetris.com/browse/RW-52433
+外部：http://52.80.87.177:8080/browse/RW-63765
+信号上报1,ICC显示这个弹框。信号上报0，ICC把这个弹框消失。
+但是在7:59:02秒 上报的信号里，先上报1,在0.001秒后，上报0。由于间隔时间太短，ICC尚未完全显示这个弹框，无法处理关闭弹框的逻辑。
+
+请对手件排查，为什么这么短的时间内，分别上报了1和0. 
+正常情况下，上报1后，要隔一段时间才会上报0.
+(不排除ICC接到1后，信号阻塞了，导致和0一起上报给了应用层)
+
+遇到弹框文案不随着语言切换而变化的，可能是因为布局文件里的string，layout加载后有缓存。可以在代码里动态 settext 解决
+
+
+
+http://jira.i-tetris.com/browse/RW-85487
+从日志里看，先点击了驾驶tab，手指在右侧向上滑动，遮住车模，在手不松开的情况下，点击了车灯页面，此时右边手势继续上滑，由于右边手势焦点一直在驾驶页面，依然可以触发驾驶页面遮罩盖住车模的逻辑，所以就出现了当前的情况：车灯页面车模消失。
+此种操作手法，属于极端情况，用户不可能这样搞，且及其容易恢复正常；如果要处理此种场景， 需要写很复杂的兜低逻辑，且容易引起莫名其妙的bug。
+故，此场景的bug，无需修改。
+
+
+
+
+RK-59775
+android.os.DeadSystemRuntimeException: android.os.DeadSystemException
+at android.view.inputmethod.InputMethodManager.reportPerceptible(InputMethodManager.java:647)
+at android.view.ImeInsetsSourceConsumer.onPerceptible(ImeInsetsSourceConsumer.java:180)
+at android.view.InsetsSourceConsumer.applyRequestedVisibilityToControl(InsetsSourceConsumer.java:419)
+at android.view.InsetsSourceConsumer.setControl(InsetsSourceConsumer.java:180)
+at android.view.ImeInsetsSourceConsumer.setControl(ImeInsetsSourceConsumer.java:157)
+at android.view.InsetsController.onControlsChanged(InsetsController.java:887)
+at android.view.ViewRootImpl$ViewRootHandler.handleMessageImpl(ViewRootImpl.java:5739)
+at android.view.ViewRootImpl$ViewRootHandler.handleMessage(ViewRootImpl.java:5693)
+at android.os.Handler.dispatchMessage(Handler.java:106)
+at android.os.Looper.loopOnce(Looper.java:201)
+at android.os.Looper.loop(Looper.java:288)
+at android.app.ActivityThread.main(ActivityThread.java:7918)
+at java.lang.reflect.Method.invoke(Native Method)
+at com.android.internal.os.RuntimeInit$MethodAndArgsCaller.run(RuntimeInit.java:553)
+at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:946)
+Caused by: android.os.DeadSystemException
+分析：DeadSystemException: android.os.DeadSystemException 是一个系统级别的严重错误，表明 Android 系统本身已处于不可用状态。应用程序无法直接防止其发生。
+
+
+
+
+
+
+后视镜电动调节是标配，和配置字无关。这个弹框肯定有。
+方向盘电动调节，03关联 方向盘电动调节配置字，0y关联转向管住柱调节配置字
+方向盘电动调节弹框离得恢复和保存 的显示隐藏关联 方向盘记忆配置字；后视镜电动调节弹框离得恢复和保存 的显示隐藏关联 后视镜下翻配置字
+RW-57279,RW-57290
+
+
+首次进入常用界面车模等几秒才显示
+http://jira.i-tetris.com/browse/RW-72787
+马帅和奇瑞沟通结果是无需处理，不是问题
+
+常用界面禁止不动，过一会车模自动切换到 车灯页面
+内部：http://jira.i-tetris.com/browse/RW-86473
+外部：http://52.80.87.177:8080/browse/RW-84111
+常用界面，车灯信号发生变化，发 了切换车模视角的指令，导致车模切换。
+
+
+车模有残影
+http://jira.i-tetris.com/browse/RW-86340
+根本原因是车辆设置退到后台，会对车模进行截图。
+下次车辆设置回到前台，会先显示截图，防止车模闪烁。
+由于用户几乎不可能这么快速操作，也很难遇到这种情况，且不会对实际功能有影响。
+故不做处理。
+
+
+
+老的软件版本，后视镜弹框里记忆恢复的按钮，关联的是 后视镜记忆这个配置字。
+当时这么更改的缘由是因为此单：
+内部：http://jira.i-tetris.com/browse/RW-32508
+外部：http://52.80.87.177:8080/browse/RW-37671
+本单中，后视镜里记忆恢复的按钮没有显示出来，是因为后视镜记忆配置字配置的值是0.
+短期解决方案：
+后视镜记忆配置字 改成 ，重启后即可显示。
+长期解决方案：
+OTA升级1.5版本。（3.12号 根据公司内部task RW-57279，将后视镜弹框里的记忆恢复按钮的关联配置字改成 后视镜倒车下翻 。 3.12 以后的版本中修复此问题）
+
+
+http://jira.i-tetris.com/browse/RW-79609
+中控一直显示系统正在启动
+ Process: com.android.systemui, PID: 7403
+07-05 14:01:59.557244  7403  7403 E AndroidRuntime: android.content.ActivityNotFoundException: No Activity found to handle Intent { act=android.intent.action.APP_LIST cat=[android.intent.category.DEFAULT] flg=0x14000000 }
+日志里发现crash，无法找到APP_LIST这个activity，表示当前系统没有安装Launcher应用，经过和Launcher同学沟通，之前调试这个台架，把Launcher删除，install进去的，所以恢复出厂设置没有了Launcher应用
+
+
+http://jira.i-tetris.com/browse/RK-25362
+同
+内部：http://jira.i-tetris.com/browse/RK-25285
+外部：http://211.159.155.78:8080/browse/RK-20741
+一样问题，处于后台降帧导致的此问题
+
+点击avm，车设车模闪
+内部：http://jira.i-tetris.com/browse/RW-122516
+外部：http://211.159.155.78:8080/browse/RW-102846
+之前提过多次这种问题。
+车模是和页面生命周期绑定的，点击avm，avm有页面弹出覆盖在车设上，导致车设的车模执行隐藏逻辑。但是avm这个页面弹出的瞬间又消失，所以车设车模又显示出来。
+导致了这种闪。
+avm无法解决弹出透明页面的问题。
+维持现状。
+
+
+全景影像界面切换到猎鹰智驾，会先跳出车辆设置界面
+内部：http://jira.i-tetris.com/browse/RW-127781
+外部：http://211.159.155.78:8080/browse/RW-105057
+视频时间在2s时从13:19 跳转 13:20，在视频时间16s时点击了avm的猎鹰智驾按钮，跳转到猎鹰智驾，中间闪现了一下 车设页面。
+从日志分析，在13:20:14s时，也就是点击avm跳转 猎鹰智驾时，本该回到前台的猎鹰智驾，却执行了 removeWindow: packages: ai.weride.compass, windowName，即猎鹰智驾的页面退到了后台；
+随后，系统按照ui层级，将下面的车设ui推到前台，此逻辑从系统层面，是正常的。
+需要智驾看下，为什么点击avm跳转 猎鹰智驾时，智驾有退到后台的动作。
+
+
+空调界面无设置项
+内部：http://jira.i-tetris.com/browse/RK-43049
+外部：http://211.159.155.78:8080/browse/RK-34786
+原因是：极端情况下，Launcher这个activity没有回调onResume方法，需要监听onTopResumedActivityChanged
+
+
+
+内部：http://jira.i-tetris.com/browse/RK-2031
+外部：http://52.80.87.177:8080/browse/RK-532
+从日志中看，在驾驶页面，上滑的手指一直没有松开，另外一根手指点击了常用页面，此时原来的手指继续上滑，由于android系统的原因，此时原来手指的滑动事件，继续作用在驾驶tab页面，会走遮罩盖住车模的逻辑，最终导致常用车模消失。
+此类操作，属于极端，用户不可能出现这种操作，且出现这种情况，点击其他tab即可恢复。
+
+
+8295端到端氛围灯未开启，操作氛围灯功能，需要先提示 请开启氛围灯
+内部：http://jira.i-tetris.com/browse/RK-9060
+外部：http://52.80.87.177:8080/browse/RK-6482
+
+
+内部：http://jira.i-tetris.com/browse/RK-19550
+外部：http://211.159.155.78:8080/browse/RK-15759
+reev的车型，后备箱开启的信号有两个，分别对应有plg配置和没有plg配置。
+当配置字配置成无plg时，应用这里只接收无plg配置对应的后备箱的信号。
+当配置字配置成有plg时，应用这里只接收有plg配置对应的后备箱的信号。
+
+实车当前是支持plg配置，所以实车发的是有plg配置对应的后备箱的信号；但是此时测试将plg配置改成了无，但是实车还是给应用发的有plg对应的后备箱的信号，所以应用无法处理此信号。
+
+建议测试时，不要随意改动plg配置，如果想测试无plg配置时的想过，找不支持plg的实车来验证。
+
+根本原因是信号就区分了两种配置，所以plg的配置字不要随便改
+
+
+
+切换显示模式后，打开有车模界面，出现闪屏
+内部：http://jira.i-tetris.com/browse/RK-1602
+外部：http://52.80.87.177:8080/browse/RK-327
+出现此问题原因：
+显示模式切换时，车模已经暂停，不再处理消息，导致车模最后停留在上一个显示模式；
+应用的显示模式切换成功后，首次切换到车模界面时，车模默认显示的是上一次的显示模式，然后再切换到最新的显示模式，导致出现这种闪一下的情况。
+无法解决的原因是因为，由于unity机制，unity暂停以后无法处理android发送的显示模式的消息，只有unity处于前台才会处理android消息。
+尝试修复的思路：
+第一次加载车模前，显示一张遮罩图，盖住车模，避免用户看到车模闪的情况。
+此思路的弊端是，android无法感知unity车模闪的时机，所以android无法准确控制遮罩显示的时间，如果遮罩消失后，unity才闪，则用户依然能看到闪烁，如果遮罩消失前，unity已经闪烁完毕，则用户看不到。
+
+
+驾驶界面的车模为系统界面的车模
+内部：http://jira.i-tetris.com/browse/RW-80751
+外部：http://52.80.87.177:8080/browse/RW-80878
+车辆设置切换到非车模页面，然后退到后台，然后使用方向盘切换驾驶模式，此时后台的车辆设置会切换到驾驶tab，但是由于unity处于后台不会响应android消息，导致车模没有切换到驾驶的车模。
+需要方向盘切换驾驶模式的逻辑里做优化：先拉车辆设置到前台，然后再切换驾驶模式。
+
+
+车辆设置常用、驾驶和车灯界面切换后再次进入车灯界面时车模出现重影卡顿
+内部：http://jira.i-tetris.com/browse/RW-85618
+外部：http://52.80.87.177:8080/browse/RW-83642
+为了解决从后台回到前台，车模闪一下的问题，这里加了一个截图盖在车模上。
+当前问题，是用户在车模执行动画过程中，主动让车辆设置退到后台，使得截图内容是正在动画过程中的车模。
+重新回到界面，车模和截图无法完全匹配，就会出现这个情况。
+此问题无法继续解决，由于实际用户不会这种快速点击，故不处理。
+
+
+常用界面车模偶现显示错误
+内部：http://jira.i-tetris.com/browse/RW-85809
+外部：http://52.80.87.177:8080/browse/RW-83727
+常用界面，但是车灯界面信号发生变化，触发了change_view,导致车模视角切换
+解决方法：车灯页面信号发生变化后，调用change_view之前，判断当前页面在不在车灯，不在的话，不发送。
+
+
+
+
+
+
+http://jira.i-tetris.com/browse/RW-20856
+原因分析：存储在Settings的System类型的数据长度超过20000个字符。
+解决：需要保存在本地的json数据采用MMKV存储。
+验证bug前需要执行下述命令清除旧的数据:
+adb shell pm clear com.mega.carsettings
+
+
+高斯模糊弹框导致的surface耗尽：
+http://jira.i-tetris.com/browse/RW-53301
+http://jira.i-tetris.com/browse/RW-52092
+解决方案： 弹框判断当前按是否是压测，是的话，不弹这个弹框。
+日志中搜索 animation-leash 或者 Layer可以看到信息。
+
+
+layer泄漏导致activity泄漏导致内存耗净：分析过程
+内部：http://jira.i-tetris.com/browse/RW-121120
+外部：http://211.159.155.78:8080/browse/RW-102242
+
+
+已修复，请使用1205版本验证。
+
+ThreadedRenderer.setForceDark(boolean)' on a null object reference
+和RW-36969重复，此单关闭。(日志不全，被关闭了)
+ThreadedRenderer.setForceDark(boolean)' on a null object reference
+和RW-42821重复，此单关闭。
+
+
+
+Caused by: java.lang.NullPointerException: Attempt to invoke virtual method 'void android.view.ThreadedRenderer.draw(android.view.View, android.view.View$AttachInfo,
+和RW-36917重复，此单关闭。
+
+Caused by: java.lang.NullPointerException: Attempt to invoke interface method 'int android.view.ViewParent.getTextDirection()' on a null object reference
+at android.view.View.resolveTextDirection(View.java:27336)
+和RW-36945重复，此单关闭。
+
+Caused by: java.lang.NullPointerException: Attempt to invoke virtual method 'void android.view.ThreadedRenderer.allocateBuffers()' on a null object reference
+at android.view.ViewRootImpl.performTraversals(ViewRootImpl.java:2723)
+和RW-36930重复，此单关闭。  
+和RW-42201重复，此单关闭。
+
+hreadedRenderer.setStopped
+和RW-48598重复，此单关闭。
+
+[ANR] com.mega.redwoodhvac 
+和RW-43157重复，本单关闭。
+
+[ANR] com.mega.carsettings osVersion
+和RW-40588重复，本单关闭。RW-42616(已关闭)
+
+
+[ANR] com.mega.chery.controller osVersion
+和 RW-43565 重复，本单关闭。
+
+id: 3663, tid: 5926, name: UnityMain >>> com.mega.redwoodhvac <<<
+和RW-49998 重复，本单关闭。
+
+修改动态氛围灯为流光，重启车机后选项变为关闭
+内部：http://jira.i-tetris.com/browse/RW-52859
+外部：http://52.80.87.177:8080/browse/RW-64316
+需求里说，下电时，要把 动态氛围灯关闭。下次重新上电，会使用最后一次的动态氛围灯的状态，也就是关闭状态
+
+
+关闭氛围灯，大屏重启后氛围灯开关保持关闭，但是车内氛围灯带是点亮状态
+http://jira.i-tetris.com/browse/RW-33937
+
+氛围灯中间颜色不能进行调节
+http://jira.i-tetris.com/browse/RW-48092
+从日志里看，动态氛围灯处于关闭状态。按照需求，就是不能调节中间颜色的。
+ID14 是仪表台氛围灯，也叫动态氛围灯，id4和id9是门板上的氛围灯
+
+
+氛围灯无法点击
+http://jira.i-tetris.com/browse/RW-48843
+logcat.log.016_2024_01_18_09_22_01.gz:01-18 09:21:12.274159 26919 26919 D AtmosphereFragment: [ (AtmosphereFragment.java:210)#resetAtmosphereLight ]resetAtmosphereLight 4
+进入apc限制了
+此时是不让用氛围灯的。
+请先解除apc限制。
+
+
+语音控制关闭氛围灯无效
+内部：http://jira.i-tetris.com/browse/RW-48378
+外部：http://52.80.87.177:8080/browse/RW-61149
+
+此回调的线程和正常的 CheryMediaControl 线程不一样，应该是重启时，CheryMediaControl 销毁的时候，没有解注册LionMediaSysThirdCallback，导致重启之前的LionMediaSysThirdCallback对象一直存在。
+解决方案：重启时解注册 LionMediaSysThirdCallback。
+内部：http://jira.i-tetris.com/browse/RW-51278
+外部：http://52.80.87.177:8080/browse/RW-63083
+
+车辆下电后，启动车辆，导航音量静音
+12:51 屏幕已经亮起，通过日志看，电源管理的回调，没有收到 电源on的状态，所以一直处于静音状态
+内部：http://jira.i-tetris.com/browse/RW-71522
+外部：http://52.80.87.177:8080/browse/RW-76056
+
+
+
+原因：车辆设置有冷启动逻辑，导致需要设置一个透明背景。这在快速切换车辆设置和其他应用的时候，会偶现这种闪黑色背景的情况。
+鉴于对实际功能没有影响，且操作场景不常见，故不做处理。
+内部：http://jira.i-tetris.com/browse/RW-91882
+外部：http://52.80.87.177:8080/browse/RW-86836
+
+
+
+notepad过滤日志可以 a|b 可以过滤多个条件
+CAR.POWER: notify power state|controlscreen 同时过滤电源状态和屏幕控制
+
+
+重启后dock栏两次加载
+内部：http://jira.i-tetris.com/browse/RW-69942
+外部：http://52.80.87.177:8080/browse/RW-75001
+此情况是因为冷启动，有对车辆设置做预加载，车辆设置页面出现的瞬间，退到后台，导致此情况。
+为了优化第一次打开车辆设置的响应速度而做的优化。
+本单提到的情况，影响不大，且只会在冷启动时有此问题，故无需修改。
+
+
+
+
+内存和cpu都不紧张，ui上未做耗时操作，但是input事件超时，需要到qnx日志查看肯恩的内存泄漏，比如此单
+RW-38234
+pmem table dump: total entries=2839, total size alloc'd=577413040(0x226a9fb0), time=10838080.00ms
+RGS release: 0x74718000, GMU FW release: 0x30000012
+
+index process name host pid total size(bytes) peak size(bytes)
+0 kgsl 49204 14057472 14143488
+3 secure memory 49204 8847360 8847360
+5 com.mega.phev 70762821 6128099328 6187638784
+6 ais_server 49203 790568 790568
+7 ivi_compositor 1761387 43335760 43876432
+8 ic_whud 1843317 75247696 75247696
+9 ic_adas 1843316 178581584 178581584
+10 avm_app 2203783 299118672 305446992
+11 screen 49195 69714040 109391992
+99 android.hardwar 49365053 790528 790528
+101 surfaceflinger 49369156 6255030272 6305116160
+241 droid.launcher3 69591321 125313024 188526592
+242 om.mega.carplay 69595439 4972544 4980736
+246 om.iflytek.xiri 69689651 11157504 11157504
+248 icerelayservice 69689657 4980736 4980736
+249 ega.redwoodhvac 69689661 95379456 109285376
+250 ac.behindscreen 69689662 28033024 28033024
+252 ndroid.systemui 69722435 35385344 38461440
+259 hery.controller 70742343 14901248 15720448
+com.mega.phev 内存泄露，请处理
+
+
+
+车辆设置界面卡死，无法点击，但是其他应用可以正常操作
+http://jira.i-tetris.com/browse/RW-36895
+
+
+进入车辆设置页面卡滞
+内部：http://jira.i-tetris.com/browse/RK-40180
+外部：http://211.159.155.78:8080/browse/RK-32774
+车设回到前台，没给 WallpaperService的Engine回调onVisibilityChanged
+徐涌分析原因是：user版本开了log d级别的日志，导致整体卡顿，关掉后复测多次没有复现
+
+
+
+座椅 恢复功能的20S超时逻辑，飞书和周倪青确认，暂不实现  RW-26936
+
+长按方控无法唤起全景影像   
+RW-37410
+
+空气净化模式（AQS）关闭时空调没有恢复到之前的状态 （记忆由vcc完成，非icc功能）
+http://jira.i-tetris.com/browse/RW-33931
+http://52.80.87.177:8080/browse/CRW-15297
+
+主副驾的上下调节UI界面均不变化的问题，低配置车就是不会变化的。RW-37227
+
+在选择无香氛的情况不会切换到有香氛的那个界面，这个切换逻辑是空调做，不是icc做 RW-37492
+
+语音关闭空调，回复双区模式未开启：参考此单，需要讯飞处理。
+http://52.80.87.177:8080/browse/CRW-17371
+
+无ICC日志，仪表Someip数据，其他测试，第三方及TBOX USB下载LOG
+http://jira.i-tetris.com/browse/RW-13020
+
+中控电动侧门开启位置和实际门开状态不一致：
+http://jira.i-tetris.com/browse/RW-37982
+
+
+
+
+
+休眠后识别人脸,座椅没有回到记忆保存位置，而是一直往前移动。
+内部：http://jira.i-tetris.com/browse/RW-77094
+外部：http://52.80.87.177:8080/browse/RW-78903
+
+
+
+【台架】播放名称过长音频时不滚动显示名称 RW-39896
+此功能在主线分支或者1209分支都已经修复，由于无法向1021分支同步代码，请测试在主线或者1209上回归此问题。
+
+
+http://jira.i-tetris.com/browse/SAM-10005/GC-3974
+android.app.RemoteServiceException: Context.startForegroundService() did not then call Service.startForeground(): ServiceRecord
+
+{ab7870f u0 com.mega.chery.iflytek/.service.AvmControllerService}
+at android.app.ActivityThread$H.handleMessage(ActivityThread.java:2005)
+at android.os.Handler.dispatchMessage(Handler.java:106)
+at android.os.Looper.loop(Looper.java:223)
+at android.app.ActivityThread.main(ActivityThread.java:7664)
+at java.lang.reflect.Method.invoke(Native Method)
+at com.android.internal.os.RuntimeInit$MethodAndArgsCaller.run(RuntimeInit.java:596)
+at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:947)
+
+
+点击座椅恢复实际恢复成功中控显示恢复失败
+http://jira.i-tetris.com/browse/RW-39469
+
+
+
+打开关闭宝宝模式后，氛围灯状态与实车不一致
+http://jira.i-tetris.com/browse/RW-39500
+http://52.80.87.177:8080/browse/CRW-18800
+原因：宝宝模式关闭时，先关闭了氛围灯，后调用重置氛围灯的亮度接口，导致氛围灯被拉起
+解决方案：调整两个接口的调用顺序，先调用 重置氛围灯的亮度接口，然后调用氛围灯关闭接口
+1220以后版本可以验证
+
+
+
+后排屏黑屏有背光
+http://jira.i-tetris.com/browse/RW-36139
+
+
+车控大灯调节，关闭和位置信号，没有e2e保护，自动和近光灯有e2e保护，pcap信号看最后两位就行。
+
+
+音乐律动正常开启，实际氛围灯不跟随音乐闪动
+http://jira.i-tetris.com/browse/RW-40088
+
+钥匙管理NFC卡界面没有删除选项
+内部：http://jira.i-tetris.com/browse/RW-37922
+外部：http://52.80.87.177:8080/browse/RW-38776
+
+动态氛围灯流光状态，无极调色时也要给动态氛围灯传颜色值
+RW-59217
+
+单色氛围灯颜色显示与实际氛围灯颜色不一致
+内部：http://jira.i-tetris.com/browse/RW-73880
+外部：http://52.80.87.177:8080/browse/RW-77265
+
+
+E03横置增程国内项目无氛围灯配置，无该功能。
+内部：http://jira.i-tetris.com/browse/RW-68997
+外部：http://52.80.87.177:8080/browse/RW-74259
+
+notifybmschgwireconnectsts=1丢失，车模依旧显示充电枪连接状态
+RK-34281
+这里车模的逻辑复杂，分慢充枪，快充枪，充电状态
+单独断开其中一个信号，去处理车模，无法控制。
+所以此项逻辑，不加入代码中，避免车模显示错乱。
+理论上实车不会有此断开的逻辑；实车如果存在信号断开的情况，需要对手件排查了。
+
+
+根本原因：车设对unity的初始化日志一切正常，但是unity内部发生异常，应用层无法干预
+改善对策：升级unity版本，并将unity所在进程独立出来，后续就算unity异常崩溃也不会导致车设崩溃。
+修复版本：ota5
+商品车问题】【E0Y】【LNNBDDES2RD579034】车辆设置里的显示界面闪退
+内部：http://jira.i-tetris.com/browse/RW-103563
+外部：http://211.159.155.78:8080/browse/RW-93160
+
+
+
+
+转换显示模式，后排屏会跳转至音乐界面
+RW-39454
+客户不同意后排屏从空调界面跳到音乐界面，但是客户想通过加一个自动熄屏的策略来减低内存消耗;
+
+
+车机开机后自动弹出多媒体音量条
+内部：http://jira.i-tetris.com/browse/RW-31869
+外部：http://52.80.87.177:8080/browse/CRW-13850
+
+
+
+后尾门高度显示为0%
+内部：http://jira.i-tetris.com/browse/RW-40838
+外部：http://52.80.87.177:8080/browse/CRW-19595
+
+
+
+
+座椅加热按钮一直闪烁
+单号1：
+（只有内部）http://jira.i-tetris.com/browse/RW-35346
+单号2：
+内部：http://jira.i-tetris.com/browse/RW-40177
+外部：http://52.80.87.177:8080/browse/CRW-19169
+
+
+【后排屏】在线配置FLDRM=1&车型=01，后排屏没有后排控制车门功能
+http://jira.i-tetris.com/browse/RW-41325
+oy无此功能
+
+
+日志里有：Cause:null pointer dereference
+http://jira.i-tetris.com/browse/RW-39749
+http://jira.i-tetris.com/browse/RW-33617
+参考张忠毅的回复，可能是某个应用内存泄露太多导致。
+
+
+
+【后排屏】满足后排控制车门输入信号
+RW-41578
+后左车门开关信号：A4028004
+后右车门开关信号：A4038004
+下面这个信号应该是不用，如有疑问，可以咨询下系统。
+1.发送BCM_DoorCtrl_RL_Legacy（0xC83B）notifyMotionDirection.DoorMotionDirection=0x1
+2.1.发送BCM_DoorCtrl_RR_Legacy（0xC83C）notifyMotionDirection.DoorMotionDirection=0x1
+
+
+RW-41423
+国际方控右键长按无法唤出语音
+日志里看，方向盘右键已经触发启动语音。
+但是国际的讯飞语音和国内的不同。
+目前系统这边不知道国际如何启动语音，请讯飞提供。
+
+
+0x0:No_Action
+0x1:Touch_Action
+点击类型的按键，点一次发一帧Touch_Action+一帧No_Action，不论当前开关是开还是关。
+这种信号在VehSetting里有配置TOUCH_ACTION，这样每次发出去的信号都是 1
+
+
+充电口盖无法打开 对手件问题
+内部：http://jira.i-tetris.com/browse/RW-37931
+外部：http://52.80.87.177:8080/browse/CRW-17877
+
+
+点击抬头显示自动按钮后更换挡位调节失败后按钮无法点击
+RW-57735
+切换档位后，会触发自动按钮的判断条件：
+档位不能是R档，车速不能大于10,电源模式是D1,DMS摄像头处于开。
+以上四个条件都满足才能点击自动按钮。
+当前日志无法判断这四个条件是否满足。请重新提供android日志。
+
+
+
+
+应用被杀死，参考http://52.80.87.177:8080/browse/CRW-19990 的分析思路。
+
+副驾安全气囊开关回弹
+http://jira.i-tetris.com/browse/RW-38050
+http://52.80.87.177:8080/browse/CRW-17960
+
+车机手机遗忘不提醒
+内部：http://jira.i-tetris.com/browse/RW-37470
+外部：http://52.80.87.177:8080/browse/CRW-17571
+对手件没有上报信号
+
+
+主驾座椅当前位置图标与实际不符，大屏显示到顶端，实际还可以调节
+内部：http://jira.i-tetris.com/browse/RW-62187
+外部：http://52.80.87.177:8080/browse/RW-69662
+
+
+多次按自定义按键后，中控不显示调节弹窗
+内部：http://jira.i-tetris.com/browse/RW-69518
+外部：http://52.80.87.177:8080/browse/RW-74679
+从日志看，前几次方向盘按键，ICC外发A938 值为3,VCC正常反馈A453 值为3.
+但是后面几次，ICC外发A938 值为3，未收到 A453的反馈。
+请对手件排查
+
+
+【E03国际在线】【俄罗斯】【实车248】【功能模块】设置自定义按键为“全息影像”时，长按方向盘左侧中按钮，中控未进入全息影响
+内部：http://jira.i-tetris.com/browse/RW-70393
+外部：http://52.80.87.177:8080/browse/RW-75311
+
+
+【实车】车窗控制偶发回弹
+内部：http://jira.i-tetris.com/browse/RW-30697
+外部：http://52.80.87.177:8080/browse/RW-37205
+vcc处理的问题
+
+对应车窗已经是%2$s，唤醒语音将右前车窗打开20%，语音未正确回复
+内部：http://jira.i-tetris.com/browse/RW-68116
+外部：http://52.80.87.177:8080/browse/RW-73732
+接收到语音时，读取的车窗开度值是18,不是20,所以icc需要发送20.
+回复没有问题。
+需要车窗看下，为什么之前已经设置程开度20,再次读取的时候，读到的值是18.
+
+验证版本太老，切日志和视频时间不匹配。
+请使用最新版本验证。如果有问题，请重新提单，此单已经很乱。
+另外，英文单数还是复数问题，请连续需求人员，给出解决方案。目前文档里给的都是单数
+
+
+大屏车窗开关动画有明显延迟
+内部：http://jira.i-tetris.com/browse/RK-47023
+外部：http://211.159.155.78:8080/browse/RK-37634
+实车车窗动作以后，才会将信号给到ICC，这里就有延迟；
+随后车模收到信号，做动画处理，由于车窗信号给过来的不是连续平滑线性的，所以车模在执行动画的时候必须要延迟处理，以达到看起来动画执行线性平滑的效果。
+综上，这个车模车窗动画的执行，比实车慢一点，是无法避免的。
+维持现状。
+
+仪表台氛围灯自动亮了一下
+内部：http://jira.i-tetris.com/browse/RW-73457
+外部：http://52.80.87.177:8080/browse/RW-77055
+监听到电源从下电 到上电 comfort档位，根据需求，需要走氛围灯迎宾流程。逻辑上无问题。
+
+负一屏下电按钮的作用：
+只是让车机休眠，不一定会导致应用进程杀死。重启亮屏后，进程可能还是之前的进程
+
+
+
+车辆设置-氛围灯-动态氛围灯任意选择效果，重启后不记忆选择  ，动态氛围灯模式处于关闭状态
+http://jira.i-tetris.com/browse/RW-56509
+从需求上看，挡位从P档变为非P档时，动态氛围灯需要切换到关闭。
+重新上电，信号监听档位，就是有个非P档的信号跳变，需要将动态氛围灯切换到关闭状态。
+此处是需求的正常实现，非问题。
+可以试试，在P档时，切换到呼吸，然后重启查看，肯定还是在呼吸状态的。
+
+
+
+
+
+
+
+http://jira.i-tetris.com/browse/RW-56396
+【E0Y】【生产车】【车辆设置】开的钥匙都不同步到大屏，即使显示了，样式也有问题
+
+驾座椅调节界面没有当前位置的那个小图标（无进度状态显示）
+http://jira.i-tetris.com/browse/RW-57859
+
+
+和主项目保持一致，氛围灯未开启的时候，语义打开音乐律动，直接就能打开氛围灯和音乐律动。
+内部：http://jira.i-tetris.com/browse/RW-68382
+外部：http://52.80.87.177:8080/browse/RW-73848
+
+
+
+[SWP4][系统设置]显示模式设置默认改为深色模式
+http://jira.i-tetris.com/browse/RW-57659
+http://jira.i-tetris.com/browse/RW-57757
+
+语音控制主驾座椅加热1档，中控屏主驾座椅加热界面显示识别成功后从1档自动跳至2档
+http://jira.i-tetris.com/browse/RW-38082
+语音执行：座椅加热1档，ICC信号发送正常，对手件回复正常；
+语音执行：座椅加热2档，ICC信号发送正常，对手件先回复2，后回复1，有问题，需要对手件排查。
+另外，icc每帧有效值后面跟了一帧无效值00，为啥对手件在还没有接收到00无效值的时候，就回复了呢？
+
+
+语音切换中英文模式中控出现1-3秒黑屏
+http://jira.i-tetris.com/browse/RW-41629
+
+已经开启语音的情况下，不再发送start
+http://jira.i-tetris.com/browse/RW-36567
+
+
+电动副仪表板点击后，不执行动作
+http://jira.i-tetris.com/browse/RW-39166
+ICC发送和接收到都是正常的，表明ICC信号下发和接收都ok。至于仪表板为啥没有移动，请对手件排查。
+
+点击电动副仪表板向前，副仪表板向前一段后又回退
+http://jira.i-tetris.com/browse/RW-38830
+从pcap日志上看，点击向上按钮，信号正常的发送和接收了。
+至于为啥副仪表板行为异常，需要对手件看下。
+
+开启动态氛围灯，实车有动效，但UI显示无动效
+内部：http://jira.i-tetris.com/browse/RW-32402
+外部：http://52.80.87.177:8080/browse/RW-37663
+实车颜色变化很多，如果ui上跟随实车变化的话，需要很多帧动画去实现。
+第一消耗cpu和内存，第二很难做到动画和实车保持一致.
+故 此功能不做实现。
+
+上电后，走完迎宾流程，在6秒左右，会发消息  RESTORE_SAVED_LIGHT_STATUS:
+                //恢复氛围灯之前的状态
+                initAtmosphereLight();
+关闭电源后，commonservice会调用会根据电源信号为0，走设防熄灭氛围灯sendAmbArming
+本问题出现原因 ：下电设防后（会关闭氛围灯），然后氛围灯迎宾流程走完后，会走恢复下电前氛围灯状态，如果下电前氛围灯是开启的，会开启氛围灯。
+解决方案：氛围灯迎宾流程走完后，判断当前电源状态，如果已经下电，则不在走恢复氛围灯逻辑。
+       
+       
+实车颜色变化很多，如果ui上跟随实车变化的话，需要很多帧动画去实现。
+第一消耗cpu和内存，第二很难做到动画和实车保持一致.
+故 此功能暂不做实现。
+内部：http://jira.i-tetris.com/browse/RW-32402
+外部：http://52.80.87.177:8080/browse/RW-37663 
+
+【原因】在氛围灯界面，说打开氛围灯，结果触发了左边菜单栏的可见即可说，没有走语义。
+【解决】屏蔽菜单栏的氛围灯的可见即可说
+【验证】在sop分支20240122版本验证
+内部：http://jira.i-tetris.com/browse/RW-48378
+外部：http://52.80.87.177:8080/browse/RW-61149
+
+语音控制关闭氛围灯无效
+为啥说走到了可见即可说，但是实际上并没有走 switch的点击事件
+内部：http://jira.i-tetris.com/browse/RW-48378
+外部：http://52.80.87.177:8080/browse/RW-61149
+
+
+氛围灯设置为流光时氛围灯无动态效果,还是静态：
+内部：http://jira.i-tetris.com/browse/RW-59361
+外部：http://52.80.87.177:8080/browse/RW-68031
+从pcap报文看，ICC已经外发了流光的值：16
+实车氛围灯为什么没有表现出流光的状态，需求氛围灯看下。
+
+语音讲话时也会音乐律动
+氛围灯音乐律动的实现原理是，根据android原生api，抓取车内音频的频率和音量大小，计算后，形成灯的亮度和颜色。
+此单这种情况，无法区分声音来源是音乐还是语音。
+无需处理。
+内部：http://jira.i-tetris.com/browse/RW-70152
+外部：http://52.80.87.177:8080/browse/RW-75138
+
+
+拨杆灯光设置无法触发灯光弹框
+http://jira.i-tetris.com/browse/RW-59319
+根据需求，开启闪光灯或者开启远光灯，才会触发这个弹框
+
+
+刷卡上电后：
+偶现动态氛围灯开关关闭状态，实际开启
+内部：http://jira.i-tetris.com/browse/RW-47792
+外部：http://52.80.87.177:8080/browse/RW-60450
+
+
+打开整车设置，界面会闪一下
+内部：http://jira.i-tetris.com/browse/RW-75013
+外部：http://52.80.87.177:8080/browse/RW-77839
+1.语言切换，或者黑白模式切换后，页面重新创建的时候，会调用黑白模式的方法给到unity。
+2.视频里看，切换模式后，点击车模页面，车模会从上一个模式切换到当前模式（比如从黑夜切换到白天模式）。
+实际上第1步执行时间在第2步之前，理论上来说，执行第2步的时候，不应该看到车模从黑夜切换到白天的过程。
+佳明刘佳明 帮忙看看这种情况办法解决
+
+
+
+
+
+
+
