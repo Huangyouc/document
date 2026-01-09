@@ -16,7 +16,7 @@ TELLTALE_FOG_LIGHT_R这个livedata在CarsettingActivity和LightFragment中均有
 
 
 切换语音等级设置选项，下方详情文言不改变
-http://jira.i-tetris.com/browse/RW-117753
+http://jira.i-tetris.com/browse/RW-117753	
 通过key寻找livedata的过程中，
 SequoiaSettings.valueOf(key.toUpperCase());
 java.lang.CaseMapper#toUpperCase的实现单独判断了土耳其语，做了特殊处理，导致  pref_key_voice_level 变成大写后，不是 PREF_KEY_VOICE_LEVEL，所以无法找到，导致写入失败
@@ -43,3 +43,72 @@ http://jira.i-tetris.com/browse/RW-124920
 
 防止高斯模糊引起的异常崩溃
 RW-35075
+
+
+
+
+现象：多次切换黑天白夜模式，后排屏黑掉
+检索后排屏进程：
+HealthManager: app: com.mega.redwoodhvac.behindscreen	,pid:5661, type:mega, max_fg:600, max_bg:600, adj:200, ToFg(ms):0, ToBg(ms):0, visiable:false, monitor:true, memUsed(MB):525.416
+
+HealthManager: MSG_CLEAN_APP_INFOR, app:com.mega.redwoodhvac.behindscreen
+猜测后排进程因为内存泄漏导致被健康管理app杀掉。
+解释：当前消耗525M，还没有超过阀值是600M。有可能是剩余内存低太低，开始按照优先级杀后台超过120M的进程。 看一下前面的log，   搜一下 try to kill
+HealthManager: try to kill app: com.mega.redwoodhvac.behindscreen, pid: 5661, reason:low memery kill background process,PSS(MB):525.416
+
+另外可以 通过 lowmemorykiller 搜索杀了哪些进程
+通过 Free RAM 可以查看剩余内存
+通过 system_monitor查看 整体内存和cpu使用情况。
+
+
+
+进入应用界面后发现会闪屏，此时要如何定位是否是relaunch activity引起的闪屏呢
+https://blog.csdn.net/wds1181977/article/details/45914489
+
+是车辆设置前换到非车模页面，再切换到其他应用，此时出于性能等方面的考虑，将车模置于后台，下次再回到车辆设置，点击带有车模的tab页面，需要有从非车模切换到车模的动作，车模需要进行展示，所以会闪一下。
+鉴于对使用体验没有影响，不做处理。
+
+
+问题：后排黑屏，日志找到：
+ActivityManager: Process com.mega.redwoodhvac.behindscreen (pid 5103) has died: vis+2 TOP 
+找到：
+12-20 22:06:35.082865   266   266 I lowmemorykiller: Kill 'com.mega.redwoodhvac.behindscreen' (5103), uid 1000, oom_adj 102 to free 101480kB
+原因：被系统lowmemerykill 杀了，系统低内存的时候会杀一部分进程回收内存
+
+
+
+
+ANR的bug单子分析：
+ANR报告：http://xmmp-wh.i-tetris.com/#/task/taskList?projectId=1685427863&taskId=16564&type=0&page=detail&jobGuid=f5a0426885d3468382f58e2124bd5fb9&taskTab=anr&version=V1.2.127.0-20231206033617&package=com.mega.redwoodhvac.behindscreen
+单子里会贴出这种连接，点击进去看看系统怎么分析的，一般可以看到。
+如果指向具体的方法，可以尝试修改。
+如果执行android源码，需要从android日志里找到 am_anr 的地方，根据时间（5000ms 或者 10000ms等），往前寻找，看看用户做了什么操作。
+
+12-11 17:35:21.942496 12783 24062 I am_anr  : [0,19397,com.mega.redwoodhvac.behindscreen,819478031,Input dispatching timed out (b64213 com.mega.redwoodhvac/com.mega.redwoodhvac.view.behind.BehindActivity2 (server) is not responding. Waited 5000ms for FocusEvent(hasFocus=true))]
+上面日志可以看到，是用户做了点击操作（Input dispatching timed out）
+
+如果还是没有头绪，可以通过 system_monitor 过滤日志，看看系统的RAM 和CPU 是否紧张。
+
+
+
+
+
+0128 未显示HUD高度自动开关  RW-57400
+经过和陶洪杰金龙 电话沟通，0223分支也就是e03 ota分支，保留高度自动调节按钮；0128 也就是e0y的 ota分支，隐藏 高度自动调节按钮。
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

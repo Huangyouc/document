@@ -154,6 +154,21 @@ someipsd.entry.serviceid ==0xa923  someipsd.entry 是用来查看 someip的握�
 点击Subscribe，相同方式可以看到 对方给我们回的是UDP还是TCp。
 
 
+应用层使用信号：
+// 车门状态
+DOOR_FL(EntryLocks.ID_DOOR, FRONT_LEFT),
+DOOR_FR(EntryLocks.ID_DOOR, FRONT_RIGHT),
+DOOR_RL(EntryLocks.ID_DOOR, REAR_LEFT),
+DOOR_RR(EntryLocks.ID_DOOR, REAR_RIGHT),
+主驾车门信号检索：
+someip.messageid ==0xA4008004
+副驾车门信号检索：
+someip.messageid ==0xA4018004
+
+
+
+someip报文里的payload的数据，就是struct，不要看 里面的length。
+
 
 运行git remote列出现有的远程，并查看其名称和URL：
 git remote -v
@@ -1320,29 +1335,11 @@ fragmentHost.getFragmentManager().beginTransaction()
                     .add(R.id.mega_havc_bar, mHvacFragment)
                    .commit();
 这种方式添加底部 dock栏，在恢复出厂设置第一次进入或者重启的时候，会明显比较慢。根据log，commit后到 fragment执行onCreate方法，可能间隔了六七秒，通过trace文件看，大部分时间浪费在系统创建fragment。
-优化方案：抛弃fragment，直接使用view。              
+优化方案：抛弃fragment，直接使用view。   
+
+
                    
 车机序列号即huid的获取方式：通过 Ecu.ID_ECU_SN 读取，不区分测试环境和生产环境。                   
-                   
-                   
-                   
-                   
-                   
-                   
-11-24 11:00:35.328552  4564  4564 D BehindActivity2: [ (BehindActivity2.java:315)#lockScreen ]lockScreen(false)
-11-24 11:00:35.328948  1125  1509 I AS.AudioService: getStreamVolume(stream=STREAM_ASSISTANT vol 5) in fixed volume mode
-11-24 11:00:35.329286  4564  4564 D SignalManager: [ (SignalManager.java:170)#getIntProperty ]getIntProperty From INT_CACHE,key = 1342177302#0, id = 1342177302, area = 0,value = 1
-11-24 11:00:35.329458  1446  4905 D CAR.AUDIO: getVolumeGroupIdForUsage usage:16
-11-24 11:00:35.329720  1647  1950 D RedwoodSomeIpProperty: [ (RedwoodSomeIpProperty.java:176)#getProperty ]getProperty, prop: 1728053432
-11-24 11:00:35.330609  4564  4564 D SignalManager: [ (SignalManager.java:178)#getIntProperty ]id = 1728053432, area = 0, getPropertyRaw = null
-11-24 11:00:35.331015  4012  4012 E ThemeUtils: View class com.mega.chery.widget.EasyImageView is an AppCompat widget that can only be used with a Theme.AppCompat theme (or descendant).         
-                   
-                   
-                   
-relaunch activity引起的闪屏:BehindActivity2 执行完成的生命周期方法后，重新创建，重新走生命周期
---------- switch to events
-11-24 11:01:09.841286  1125  1895 I wm_relaunch_resume_activity: [0,18662583,1777,com.mega.redwoodhvac/.view.behind.BehindActivity2]
-https://blog.csdn.net/wds1181977/article/details/45914489
 
                    
                    
@@ -1352,9 +1349,7 @@ https://blog.csdn.net/wds1181977/article/details/45914489
 
 各模块的介绍和架构设计：
 https://drive.google.com/drive/u/0/folders/12ZlxxuFww_kOmCjJThnPWkW-mOLS_488         
-                   
-       
-       后排黑屏，优先看 后排进程com.mega.redwoodhvac.behindscreen起来了没有，空调进程com.mega.redwoodhvac起来了没了，  BehindActivity2有没有异常。    
+
        
 抬头显示的配置字，只有当 配置字=1的时候，hud功能才展示，等于2,是ar抬头显示，目前车子上没有装的，等于2的时候，代码里也不要显示hud功能             
 
@@ -1368,28 +1363,14 @@ Firing events过滤出来的日志，说明这个事件被 3074 这个进程消�
 
 
 
-现象：多次切换黑天白夜模式，后排屏黑掉
-检索后排屏进程：
-HealthManager: app: com.mega.redwoodhvac.behindscreen	,pid:5661, type:mega, max_fg:600, max_bg:600, adj:200, ToFg(ms):0, ToBg(ms):0, visiable:false, monitor:true, memUsed(MB):525.416
-
-HealthManager: MSG_CLEAN_APP_INFOR, app:com.mega.redwoodhvac.behindscreen
-猜测后排进程因为内存泄漏导致被健康管理app杀掉。
-解释：当前消耗525M，还没有超过阀值是600M。有可能是剩余内存低太低，开始按照优先级杀后台超过120M的进程。 看一下前面的log，   搜一下 try to kill
-HealthManager: try to kill app: com.mega.redwoodhvac.behindscreen, pid: 5661, reason:low memery kill background process,PSS(MB):525.416
-
-另外可以 通过 lowmemorykiller 搜索杀了哪些进程
-通过 Free RAM 可以查看剩余内存
-通过 system_monitor查看 整体内存和cpu使用情况。
-
-
-
-
 
 内存泄漏分析工具：Android Stuido Profiler
 https://zhuanlan.zhihu.com/p/658732427  可以找到谁泄漏了，谁持有了泄漏对象
 
 
+
 有时候，内存爆炸，看prof文件，可能看不到泄漏，需要看下哪个对象的数量很多，则这个对象的引用方式有异常，比如http://jira.i-tetris.com/browse/RW-106246
+
 
 leakcanary查看内存泄漏：
 implementation 'com.squareup.leakcanary:leakcanary-android:2.14'
@@ -1506,29 +1487,8 @@ MegaLinkManager找 罗红杰
 
 
 
-应用层使用信号：
-// 车门状态
-DOOR_FL(EntryLocks.ID_DOOR, FRONT_LEFT),
-DOOR_FR(EntryLocks.ID_DOOR, FRONT_RIGHT),
-DOOR_RL(EntryLocks.ID_DOOR, REAR_LEFT),
-DOOR_RR(EntryLocks.ID_DOOR, REAR_RIGHT),
-主驾车门信号检索：
-someip.messageid ==0xA4008004
-副驾车门信号检索：
-someip.messageid ==0xA4018004
-
-
-
-
-
 视屏中点击副驾车门，结果打开了主驾车门，应该打开副驾车门才对。
 从pcap里看到，上报的确实是副驾驶车门开，没有上报主驾车门开。
-
-
-进入应用界面后发现会闪屏，此时要如何定位是否是relaunch activity引起的闪屏呢
-https://blog.csdn.net/wds1181977/article/details/45914489
-
-
 
 
 
@@ -1542,11 +1502,11 @@ app:updatesContinuously="false"
 adb shell pm grant com.android.systemui android.permission.BLUETOOTH_CONNECT 系统异常导致缺少权限的都可以用这个解决
 
 
-// 重启中
-14048: 12-01 18:03:15.846838 0 0 I : Booting Linux on physical CPU 0x0000000000 [0x51df804e]
+重启中的日志：
+Booting Linux on physical CPU 0x0000000000 [0x51df804e]
 
-// 通知Launcher启动
-45714: 12-01 18:03:30.624981 2063 2063 D CarControlModel: [ (CarControlModel.java:104)#notifyLauncherReady ]notifyLauncherReady ID_LAUNCHER_READ.
+通知Launcher启动的日志：
+CarControlModel: [ (CarControlModel.java:104)#notifyLauncherReady ]notifyLauncherReady ID_LAUNCHER_READ.
 
 
 
@@ -1559,12 +1519,6 @@ adb logcat | grep sendToDataPointForCp
 此目录里可以找到每次编译的apk
 https://jenkins.i-tetris.com/view/mfg/job/redwood_os_mfg/58/execution/node/15/ws/android/vendor/mega/prebuilts/release_apks/redwood/
 
-
-
-
-
-是车辆设置前换到非车模页面，再切换到其他应用，此时出于性能等方面的考虑，将车模置于后台，下次再回到车辆设置，点击带有车模的tab页面，需要有从非车模切换到车模的动作，车模需要进行展示，所以会闪一下。
-鉴于对使用体验没有影响，不做处理。
 
 
 2023.12.21
@@ -1595,13 +1549,6 @@ adb: failed to install RedwoodCarSettings.apk: Failure [INSTALL_FAILED_TEST_ONLY
 解决方法：adb install -t test.apk
 
 
-grep -rn "abcd"  可以从当前目录中过滤出abcd字段。
-
-
-
-还有一种方案：不要动效，使用静态图片
-
-
 ssh远程：
 ssh matrix@10.57.1.168
 密码：matrix
@@ -1618,12 +1565,6 @@ $ adb -s emulator-5554 shell
 远程拉文件
 scp -r matrix@10.57.1.168:~/eric0115/tmp ./localdir
 scp -r matrix@10.57.1.168:~/0118/perf_set18.data .
-
-问题：后排黑屏，日志找到：
-ActivityManager: Process com.mega.redwoodhvac.behindscreen (pid 5103) has died: vis+2 TOP 
-找到：
-12-20 22:06:35.082865   266   266 I lowmemorykiller: Kill 'com.mega.redwoodhvac.behindscreen' (5103), uid 1000, oom_adj 102 to free 101480kB
-原因：被系统lowmemerykill 杀了，系统低内存的时候会杀一部分进程回收内存
 
 
 hud模式设置topic：HUD/HUDDisplayMode
@@ -1690,7 +1631,7 @@ tombstones的单子，要下载 tombstones 日志
 
 
 
-通过adb命令开启GPU过渡绘制调试
+通过adb命令开启GPU过渡绘制调试：
 
 当然，如果每次都进入系统设置嫌麻烦，可以使用adb命令进行开启和关闭：
 开启『调试 GPU 过度绘制』：
@@ -1704,8 +1645,6 @@ adb shell setprop debug.hwui.overdraw false
 粉色：3 次过度绘制
 红色：4 次及以上过度绘制
 
-
-someip报文里的payload的数据，就是struct，不要看 里面的length。
 
 
 开启音乐律动，AmbLigFlngModSel 这个值肯定是发3 
@@ -1737,23 +1676,13 @@ RESTORE_SAVED_LIGHT_STATUS
 
 
 
-ANR的bug单子分析：
-ANR报告：http://xmmp-wh.i-tetris.com/#/task/taskList?projectId=1685427863&taskId=16564&type=0&page=detail&jobGuid=f5a0426885d3468382f58e2124bd5fb9&taskTab=anr&version=V1.2.127.0-20231206033617&package=com.mega.redwoodhvac.behindscreen
-单子里会贴出这种连接，点击进去看看系统怎么分析的，一般可以看到。
-如果指向具体的方法，可以尝试修改。
-如果执行android源码，需要从android日志里找到 am_anr 的地方，根据时间（5000ms 或者 10000ms等），往前寻找，看看用户做了什么操作。
-
-12-11 17:35:21.942496 12783 24062 I am_anr  : [0,19397,com.mega.redwoodhvac.behindscreen,819478031,Input dispatching timed out (b64213 com.mega.redwoodhvac/com.mega.redwoodhvac.view.behind.BehindActivity2 (server) is not responding. Waited 5000ms for FocusEvent(hasFocus=true))]
-上面日志可以看到，是用户做了点击操作（Input dispatching timed out）
-
-如果还是没有头绪，可以通过 system_monitor 过滤日志，看看系统的RAM 和CPU 是否紧张。
-
-
 deliverInputEvent to package 排查当前时间点有没有点击事件发到应用
 
 
 
 android:importantForAccessibility="noHideDescendants"
+
+
 
 给外部提供获取车型的代码：
  int value = Settings.System.getInt(getContentResolver(),
@@ -1795,8 +1724,6 @@ A4038004
     DOOR_RR(EntryLocks.ID_DOOR, REAR_RIGHT),
     
     
-0128 未显示HUD高度自动开关  RW-57400
-经过和陶洪杰金龙 电话沟通，0223分支也就是e03 ota分支，保留高度自动调节按钮；0128 也就是e0y的 ota分支，隐藏 高度自动调节按钮。
 
 系统setting属性写入，立刻断电，会出现写入失败的情况。
 据说可以通过   Runtime.getRuntime().exec("sync");，强制写入，但是不知道会引起什么未知问题
@@ -2189,11 +2116,6 @@ android:persistent="true"
 去掉这个属性后，可以直接install应用。
 
 
-
-：
-
-
-
     sourceSets {
         main {
             java.srcDirs = ['main/src']
@@ -2281,8 +2203,6 @@ AndroidStudio 卡的话，如果只是为了查代码，用这两个网站就行
 
 另外，单独打开 源码某个工程，可以：
 /disk4t/8295_code/android/android$ aidegen vendor/mega/packages/apps/MegaSystemUI frameworks/base/  -i s -p /home/hongjie/tools/android-studio-2025.2.2.7-linux/android-studio/bin
-
-
 
 
 
@@ -2417,8 +2337,6 @@ Everything is Ok
 make android 2>&1 | tee build_log.txt
 
 
-
-
 icar，某个topic 
 2025-10-13 23:17:58.032  7905-7908  message_center          vendor.mega.msgcenter-service        D  send:108 DBG topic:ESC/HHC/FaultSts, payload len:9, payload:{value:1}
 2025-10-13 23:17:58.038  7905-7913  message_center          vendor.mega.msgcenter-service        D  dispatch_msg:311 DBG dispatch_msg topic:ESC/HHC/FaultSts, payload_len:9, payload:{value:1}
@@ -2436,12 +2354,8 @@ com.mychery.carsettings.MainActivity
 
 
 
-
-
 pag动画资源在线预览：
 https://pag.io/player.html
-
-
 
 
 
