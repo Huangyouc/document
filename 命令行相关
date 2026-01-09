@@ -32,6 +32,12 @@ exit 退出当前 adb操作
 
 杀掉这个应用，清掉数据：
 adb shell pm clear com.mega.settings
+清除的内容:
+应用数据 (Data)： 存储在 /data/data/com.mega.settings 目录下的所有本地数据库、Shared Preferences（配置文件）、以及应用私有文件都会被物理删除。
+应用缓存 (Cache)： 所有的临时运行缓存会被清空。
+权限重置 (Permissions)： 在较新的 Android 版本中，此命令通常会重置该应用已获得的运行时权限。
+后台进程： 执行该命令会强制停止（Force Stop）该应用当前运行的所有进程。
+
 
 unity私有数据目录：
 /data/user_de/0/com.mega.carmodel
@@ -46,6 +52,30 @@ scp: Connection closed
 gitdir=$(git rev-parse --git-dir); scp -O -p -P 29418 youchang.huang@git.i-tetris.com:hooks/commit-msg ${gitdir}/hooks/
 
 
+
+注意事项：
+权限问题：如果 scp 失败，请检查：
+是否已添加服务器的 SSH 公钥到您的 Git 账户
+尝试用 curl 手动下载钩子：
+
+bash
+curl -Lo .git/hooks/commit-msg http://git.i-tetris.com/tools/hooks/commit-msg
+chmod +x .git/hooks/commit-msg
+多提交情况：如果是多个提交缺少 Change-Id：
+
+bash
+git rebase -i HEAD~2  # 修改最近2个提交（根据实际数量调整）
+# 将除第一个提交外的所有行首的 "pick" 改为 "reword"
+# 保存退出后会逐个打开编辑器，直接保存关闭即可（触发钩子）
+git push origin HEAD:refs/for/master
+原理说明：
+Gerrit 代码审核系统要求每个提交包含唯一的 Change-Id（形如 I5a9d1748f912345b6a7890c1d2e3f4g5h6i7j8k9l0）。commit-msg 钩子会在提交时自动生成这个标识符插入到提交消息底部。
+
+如果仍有问题，请检查：
+钩子是否安装成功（查看 .git/hooks/commit-msg 是否存在）
+提交信息末尾是否已包含 Change-Id（使用 git log 查看最新提交）
+
+
 查看  Settings.Global.putInt 写入的数据：
 cd /data/system/users/0 
 cat settings_global.xml | grep HICAR
@@ -57,47 +87,12 @@ cat settings_global.xml | grep HICAR
 adb root 
 adb remount
 adb shell
-cd vendor/bin/hw                                                   
+
+adb push android.hardware.automotive.vehicle@2.0-mega-service /vendor/bin/hw  
+adb push RedwoodCarService.apk system/priv-app/RedwoodCarService     
+                             
 ls -l | grep auto
--rwxr-xr-x 1 root      shell       60456 2022-12-27 07:37 android.hardware.automotive.audiocontrol@2.0-service
--rwxr-xr-x 1 root      shell     2312016 2022-12-27 07:38 android.hardware.automotive.vehicle@2.0-mega-service
--rwxr-xr-x 1 root      shell      339488 2022-12-27 07:37 android.hardware.automotive.vehicle@2.0-service
--rwxr-xr-x 1 root      shell       43528 2022-12-27 07:38 vendor.qti.automotive.qcarcam@1.0-service
-redwood:/vendor/bin/hw # exit                                                                                                                                   
-youchanghuang@ych-HP-ProBook:~/下载$ adb push '/home/youchanghuang/下载/android.hardware.automotive.vehicle@2.0-mega-service' /vendor/bin/hw
-/home/youchanghuang/下载/android.hardware.automotive.vehicle@2.0-mega-service: 1 file pushed. 31.1 MB/s (2344008 bytes in 0.072s)
-youchanghuang@ych-HP-ProBook:~/下载$ adb shell
-redwood:/ # sync
-redwood:/ # sync
-redwood:/ # exit'
-> ^C
-130|redwood:/ # exit
-youchanghuang@ych-HP-ProBook:~/下载$ adb sehll
-adb: usage: unknown command sehll
-youchanghuang@ych-HP-ProBook:~/下载$ adb shell
-redwood:/ # cd syste
-system/      system_ext/
-redwood:/ # cd system/pr                                                                                                                                        
-priv-app/  product/
-redwood:/ # cd system/priv-app/RedwoodCarService/                                                                                                               
-redwood:/system/priv-app/RedwoodCarService # ls
-RedwoodCarService.apk
-redwood:/system/priv-app/RedwoodCarService # exit
-youchanghuang@ych-HP-ProBook:~/下载$ adb push RedwoodCarService.apk system/priv-app/RedwoodCarService
-RedwoodCarService.apk: 1 file pushed. 28.2 MB/s (1299129 bytes in 0.044s)
-youchanghuang@ych-HP-ProBook:~/下载$ sync
-youchanghuang@ych-HP-ProBook:~/下载$ adb shell
-redwood:/ # sync
-redwood:/ # cd syste                                                                                                                                            
-system/      system_ext/
-redwood:/ # cd system/pr                                                                                                                                        
-priv-app/  product/
-redwood:/ # cd system/priv-app/RedwoodCarService/                                                                                                               
-redwood:/system/priv-app/RedwoodCarService # ls -l        
-total 1272
--rw-r--r-- 1 root root 1299129 2022-12-29 15:35 RedwoodCarService.apk
-redwood:/system/priv-app/RedwoodCarService # sync
-redwood:/system/priv-app/RedwoodCarService # youchanghuang@ych-HP-ProBook:~/下载$ 
+
 
 
 电脑上如何模拟信号发送进行调试：
@@ -139,6 +134,26 @@ someipsd.entry.serviceid==0xa701
 过滤出来后，即有Offer，又有Subscribe 和 SubscribeAck，这是一个完整的牵手过程，说明这个服务正常的。
 
 
+如果wireshark过滤不出来信息，找陈伟帮忙，应该要有件 decode as配置一些信息
+
+wireshark 信息过滤：
+someipsd.entry.serviceid==0xA920
+可以过滤出 offer  subscribe  subscribleAck
+过滤出具体的服务并且能看到发出去的值
+ip.addr == 192.168.62.31 && someip.serviceid==0xA920&&someip.payload==01
+
+wireshark no time source destination 这一行的，右键选中pref，可以+一个payload，属性就写someip.payload
+
+使用 someipsd.entry.serviceid==0xA966过滤，如果出来的结果只有offer，没有subscribe的话，说明我们发出去，对方没有订阅，是对方的问题
+如果对方没有订阅，使用someip.serviceid==0xA966过滤的结果是空白的。
+如果对方订阅了，使用someip.serviceid==0xA966过滤的结果 会有payload的值，paylaod就是我们代码发出去的值。
+
+someipsd.entry.serviceid ==0xa923  someipsd.entry 是用来查看 someip的握手过程
+点击offer这一行，查看 SOME/IP Service Discovery Protocol ，展开Entries Array ,会有很多Offer Service,找到我们想要的Service ID，比如 0xa923,展开以后，有个Index,看看是多少行；然后在Options Array 里找到对应的行数，就能看到我们发的是TCP还是UDP
+
+点击Subscribe，相同方式可以看到 对方给我们回的是UDP还是TCp。
+
+
 
 运行git remote列出现有的远程，并查看其名称和URL：
 git remote -v
@@ -167,7 +182,7 @@ git修改文本编辑器为vim
 git config --global core.editor "vim"
 
 
-连接上后，进度条卡在100%，就是进不去页面的情况
+todesk连接上后，进度条卡在100%，就是进不去页面的情况
 被控电脑ubuntu:
 sudo vim /etc/gdm3/custom.conf   把#WaylandEnable=false前的#号删掉
 sudo service gdm3 restart
@@ -177,7 +192,6 @@ sudo service gdm3 restart
 E0X如何在 as的日志里过滤出输入信号：
 RedwoodSomeIpProperty
 并使用 No Filters
-
 
 
 adb pull log 拉的是安卓的log
@@ -206,9 +220,6 @@ OEM_VERSION=00.01.02.52
 
 
 
-如果wireshark过滤不出来信息，找陈伟帮忙，应该要有件 decode as配置一些信息
-
-
 ota升级的时候，如果进度条很慢，可能是内存被占用，
 adb shell
 telnet cdc-qnx
@@ -218,35 +229,16 @@ slay ic_service
 这样升级会快点。
 
 
-wireshark 信息过滤：
-someipsd.entry.serviceid==0xA920
-可以过滤出 offer  subscribe  subscribleAck
-过滤出具体的服务并且能看到发出去的值
-ip.addr == 192.168.62.31 && someip.serviceid==0xA920&&someip.payload==01
-
-wireshark no time source destination 这一行的，右键选中pref，可以+一个payload，属性就写someip.payload
-
-使用 someipsd.entry.serviceid==0xA966过滤，如果出来的结果只有offer，没有subscribe的话，说明我们发出去，对方没有订阅，是对方的问题
-如果对方没有订阅，使用someip.serviceid==0xA966过滤的结果是空白的。
-如果对方订阅了，使用someip.serviceid==0xA966过滤的结果 会有payload的值，paylaod就是我们代码发出去的值。
-
-someipsd.entry.serviceid ==0xa923  someipsd.entry 是用来查看 someip的握手过程
-点击offer这一行，查看 SOME/IP Service Discovery Protocol ，展开Entries Array ,会有很多Offer Service,找到我们想要的Service ID，比如 0xa923,展开以后，有个Index,看看是多少行；然后在Options Array 里找到对应的行数，就能看到我们发的是TCP还是UDP
-
-点击Subscribe，相同方式可以看到 对方给我们回的是UDP还是TCp。
-
-
 电脑交换空间设置：
 https://developer.huawei.com/home/forum/hwc/thread-0210178450634573081-1-1.html
 
 
 
+查看麦克风是否通了:
 adb shell
 telnet cdc-qnx
 root
 logcat -w|grep "M short to ground detected!"
-
-查看麦克风是否通了
 如果显示 1 2 3 4，就表示 1 2 3 4 都没通
 
 麦克风接法：A5接负极，A6接正极。
@@ -265,10 +257,6 @@ T1E实车抓日志：
 u盘根目录，新建 log.mega.co 文件夹，u盘里不要有升级包之类的东西。
 u盘插到车上usb接口，当前软件要处于usb模式。
 
-T1E切换usb模式和adb模式：
-本地设置 ，系统tab的右下角，多次点击，弹出工程模式，可以进行adb和usb切换
-
-切换到adb模式下，怎么抓日志？
 
 USER版本开root的方法：
 1.telnet cdc-qnx
@@ -277,33 +265,33 @@ root@mega#cdc!
 2.touch persist/enable_dbg
 3.reset
 关闭android root权限步骤
-1.telnet cdc-qnx（输root +密码@mega#cdc!)
+1.telnet cdc-qnx（输root +密码@mega#cdc!)  密码可能是：Mega#ICC%0630
 2.rm persist/enable_dbg
 3.reset
 大家记得打开了不用的话要关掉，尤其是在客户现场使用尤其注意
 
 
+遇到：telnet: connect: Message too long
+输入：setenforce 0   就行
+可能会需要输入密码：
+Mega#ICC%0630
+
+user版本使用adb root的时候，弹出弹框：root密码，输入 进入qnx的密码即可，比如：Mega#ICC%0630
+
+E0X_redwood, E0X_kirkwood sop 分支今天(20240702)及之后的 user 版本，进入QNX （串口或 adb shell 里通过 telnet 登录连接）需要输入密码：Mega#ICC%0630
+
+adb root和su命令需要输入密码：Mega#ICC%0630, 自动化台架需要先执行adb shell setprop persist.adb.passwd.verify.enable false
+执行adb shell setprop persist.adb.passwd.verify.enable false 取消输入密码
+
+
 8295 user build 打开 root 的方法：
-
 1. 在 qnx 里面 执行下面的命令
-
 touch /persist/debug/enable_dbg
-
 2. 重启 8295
-
 3. adb shell
-
 4. 执行下面的命令就进入 root
 vdbg
 
-
-
-
-遇到：telnet: connect: Message too long
-输入：setenforce 0   就行
-
-可能会需要输入密码：
-Mega#ICC%0630
 
 1、不接以太网盒子，不会触发心跳重启检测；
 2、接了以太网盒子，必须按照以太网物理层配置一个vcc的配置，步骤如下：
@@ -330,7 +318,7 @@ adb pull /log
 zgrep "value: 1" *//过滤出所有 包含value: 1 的语句（有空格的情况下，需要用 ""）
 或者：
 zgrep EHMI_ACADJUST_NOTIFY_AC_REQUEST  *
-
+过滤多个字段：
 zgrep -e "CarSettingActivity->onResume" -e "CarSettingActivity->onStop" *
 
 文件中过滤关键字
@@ -351,6 +339,9 @@ audioserver    9096      1 3 00:07:18 ?     00:00:04 android.hardware.audio.serv
 audioserver    9097      1 3 00:07:18 ?     00:00:03 audioserver
 root           9914   9009 0 00:09:37 pts/1 00:00:00 grep audio
 redwood:/ # kill -9 9096  
+
+
+adb shell am force-stop com.lion.media 可以杀掉这个包名对应的进程
 
 
 logcat -b
@@ -392,14 +383,9 @@ add device 3: /dev/input/event0
 /dev/input/event1: 0003 0039 ffffffff
 /dev/input/event1: 0001 014a 00000000
 /dev/input/event1: 0000 0000 00000000
-/dev/input/event1: 0001 014a 00000001
-/dev/input/event1: 0003 0039 00000000
-/dev/input/event1: 0003 0035 0000049a
-/dev/input/event1: 0003 0036 00000503
-/dev/input/event1: 0000 0000 00000000
-/dev/input/event1: 0003 0039 ffffffff
-/dev/input/event1: 0001 014a 00000000
-如果点击屏幕，没有这种日志输出，就是屏幕的问题，给高兵；有输出，但是屏幕依然没反应，需要根据日志分析。
+如果点击屏幕，没有这种日志输出，就是屏幕的问题；有输出，但是屏幕依然没反应，需要根据日志分析。
+
+或者通过scrcpy虚拟屏，如果虚拟屏可以正常操作，但是实体屏幕不行，就能确定是屏幕的问题。
 
 
 git push mega HEAD:refs/for/master
@@ -477,11 +463,6 @@ adb root
 adb remount
 
 
-命令行抓取日志：
-adb shell
-logcat | grep Runtime
-
-
 
 在特定目录下，C*表示文件名是C开头的文件，都会被推入这个目录/data/user_de/0/com.mega.cert/cache/
 adb push C* /data/user_de/0/com.mega.cert/cache/
@@ -495,66 +476,41 @@ rm -rf log
 卸载apk：
 1、直接执行卸载
 1）查看包名：
-
 adb shell pm list packages
-
 2）指定包名卸载：
-
 adb uninstall {包名}
 
 2、获取root权限卸载
 方法1一般可能无法卸载，这时就需要获取root权限，删除指定文件下的apk。
 
 1）通过包名获取apk路径（包名地址）：
-
 adb shell pm path {包名}
-
 2）root权限：
-
 adb root
-
 3）读写权限
-
 adb remount
-
 4）删除apk：
-
 adb shell rm {包名地址}
-
 5）重启root：
-
 adb reboot
 
 3、shell卸载
 如果2方法还是无法卸载，就只能进入apk目录下进行删除了。
-
 1）获取root权限：
-
 执行2中（2）（3）方法
-
 2）进入shell：
-
 adb shell
-
 3）查看包名：
-
 pm list package
-
 4）获取路径：
-
 pm path {包名}
-
 5）进入apk所在目录
-
 cd /system/app/***
-
 6）彻底删除apk：
-
 rm -rf xxx.apk
-
 7）重启：
-
 reboot
+
 
 apk重签名：
 jarsigner -verbose -keystore XXXXX.keystore -signedjar notepad_signed.apk notepad.apk XXXX.keystore
@@ -576,13 +532,6 @@ bytes) bytes)
 
 系统集成apk，启动报错：so dlopen，解决方案：https://docs.google.com/document/d/1n2-A9btZv-QZpvyoy91UyVXR7fojKRilX2Q34-06CSE/edit?tab=t.0#heading=h.2okknt7574gu
 
-公司的自己的网盘地址：
-https://mega-disk.megatronix.com/apps/files/?dir=/&fileid=480225  域账号
-
-信号表里的颜色标注：
-需要处理的信号统一修改成黄色；
-王锐把黄色的信号加入到Carservice以后，会改成绿色；
-上层应用开发调用信号，确认没问题，就把颜色去掉。
 
 
 git clone ssh://youchang.huang@git.i-tetris.com:29418/apps/gladius/android/chery/e0x/apk_prebuilts 
@@ -601,6 +550,11 @@ LOCAL_SYSTEM_EXT_MODULE := true
 还有其他配置可以把apk放到data下。
 在Android.mk通过设置LOCAL_CERTIFICATE实现。如：LOCAL_CERTIFICATE := platform即选择platform来签名。
 注：预置无源码的apk应用时，很多时候仍然使用原本第三方签名，LOCAL_CERTIFICATE := PRESIGNED。
+
+
+prebuild mk  文件中配置了LOCAL_VENDOR_MODULE := true，表明app放在vendor目录下，
+比如 RedwoodCarController在/vendor/priv-app目录， 则permissions文件目录应该是 这种：vendor/etc/permissions/privapp-permissions-redwood.xml
+prebuild mk  文件中没有配置LOCAL_VENDOR_MODULE := true，表明app放在system目录下，
 
 
 推ic_service步骤：
@@ -647,12 +601,6 @@ reset
 查看ic_service进程在不在
 ps -e | grep ic_  
 
-sudo su
-赋予当前文件夹全部权限
-
-cp -R opt/ /abc  将opt拷贝到 abc文件夹下
-
-adb shell am force-stop com.lion.media 可以杀掉这个包名对应的进程
 
 
 anr日志分析流程：
@@ -763,9 +711,15 @@ adb shell pm path com.mega.redwoodautolinetest
 查看当前目录下，各个文件的大小：
 du -sh *
 
+
 adb shell wm density
 
 adb shell wm size
+
+修改设备分辨率：
+adb shell wm size 2560x1440
+设置density
+adb shell wm density 240
 
 seLinux权限问题，需要总结起来
 
@@ -789,25 +743,6 @@ adb shell start
 
 
 
-设置车辆识别码：
-
-adb shell settings put global isTestMode 1
-adb shell settings put global isTestDev 1
-
-adb shell settings put global TestVin E03TEST8155000035
-adb shell settings put global TestSn FCOT23#E0300035#
-adb shell settings put global TestIccId 89860920703041500035
-
-可以看到有没有设置成功或者系统中有没有这个数据。
-adb shell settings  get global TestVin
-
-注意：给实车写入三码数据，注意不要执行adb root。 如果不确定是否执行过adb root,请先 adb reboot后，再写入数据。
-如果  执行adb root，再写入数据，数据很容易丢失。
-
-还有代码中通过provider写入settings的数据，都放在：/data/system/users/0/settings_global.xml 这个文件中，通过 cat settings_global.xml可以将xml打印出来。
-
-
-
 MegaSettings监听值的变化：
    MegaSettings.putIntForUserGlobal(null,"name",0,-1)
         Settings.Global.getUriFor("name");
@@ -820,7 +755,6 @@ MegaSettings监听值的变化：
 
 
 如果有遇到 弹窗需要 毛玻璃效果的，可以考虑继承这个：mega.blur.view.BlurDialog或者 RWBlurDialog
-
 
 
 git批量cherry-pick
@@ -895,7 +829,6 @@ msg_center_test -t uartrpc_svc/uds/req '~!b:0x030x010x000x0f0x010x0e0x800x2e0xf1
 branch:release/redwood_hqx.1.2.1_20230410 status:merged
 
 
-power
 notepad安装
 sudo snap install notepad-plus-plus
 
@@ -919,49 +852,11 @@ git branch  <新分支名> 41250fc
 然后在git push
 
 
+使用gitkraken打开一个git仓库，提示：
 cannot be opened,because it is a shallow repo
 解决方案：
 当前app项目根目录下：
 git fetch --unshallow
-
-
-
-解决方案：
-安装 commit-msg 钩子（自动生成 Change-Id）：
-bash
-gitdir=$(git rev-parse --git-dir)
-scp -p -P 29418 youchang.huang@git.i-tetris.com:hooks/commit-msg "${gitdir}/hooks/"
-修改最后一次提交（自动注入 Change-Id）：
-
-bash
-git commit --amend --no-edit
-重新推送代码：
-
-bash
-git push origin HEAD:refs/for/master
-注意事项：
-权限问题：如果 scp 失败，请检查：
-
-是否已添加服务器的 SSH 公钥到您的 Git 账户
-
-尝试用 curl 手动下载钩子：
-
-bash
-curl -Lo .git/hooks/commit-msg http://git.i-tetris.com/tools/hooks/commit-msg
-chmod +x .git/hooks/commit-msg
-多提交情况：如果是多个提交缺少 Change-Id：
-
-bash
-git rebase -i HEAD~2  # 修改最近2个提交（根据实际数量调整）
-# 将除第一个提交外的所有行首的 "pick" 改为 "reword"
-# 保存退出后会逐个打开编辑器，直接保存关闭即可（触发钩子）
-git push origin HEAD:refs/for/master
-原理说明：
-Gerrit 代码审核系统要求每个提交包含唯一的 Change-Id（形如 I5a9d1748f912345b6a7890c1d2e3f4g5h6i7j8k9l0）。commit-msg 钩子会在提交时自动生成这个标识符插入到提交消息底部。
-
-如果仍有问题，请检查：
-钩子是否安装成功（查看 .git/hooks/commit-msg 是否存在）
-提交信息末尾是否已包含 Change-Id（使用 git log 查看最新提交）
 
 
 
@@ -986,12 +881,13 @@ String oldTimeString = MegaSystemProperties.get("sys.debug.empty_fl30_activity",
 
 
 
-android5.0以后不允许隐示启动servcie或这广播，必须指定service类名。
+android5.0以后不允许隐示启动servcie或广播，必须指定service类名。
+
+
 设置具体日期的0点：
 adb root && adb shell date "2024-08-01 12:00:00"
+adb shell date -s "20240801.120000"
 
-#!/bin/bash
-echo "@A20230314" | sudo -S bash vlan_chery.sh && python3 display_gui_chery.py
 
 
 
@@ -1005,6 +901,11 @@ x86_64
 查看apk签名：
 keytool -printcert -jarfile RedwoodSystemUI.apk
 
+使用以下命令查看APK签名：(只能看v1签名)
+jarsigner -verify -verbose -certs app-release.apk
+有v2签名的，可以用这个：
+apksigner verify -v --print-certs xxx.apk 
+
 adb shell
 md5sum 某个文件，可以查看其md5值
 
@@ -1012,26 +913,12 @@ md5sum 某个文件，可以查看其md5值
 
 
 工程模式写入avm，会导致外置功放的配置失效
-解决方案：Qnx 输入这个命令后重启 ecu_config_utility -c
+解决方案：Qnx 输入这个命令后重启 ecu_config_utility -c   
 
-
-工程模式app，使用代码运行到板子上，点击 日志导出，报错：
-java.lang.UnsatisfiedLinkError: dlopen failed: library "/system/lib64/libMegaLogger.so" needed or dlopened by "/apex/com.android.art/lib64/libnativeloader.so" is not accessible for the namespace "classloader-namespace"
-        at java.lang.Runtime.loadLibrary0(Runtime.java:1087)
-        at java.lang.Runtime.loadLibrary0(Runtime.java:1008)
-        at java.lang.System.loadLibrary(System.java:1664)
-恢复出厂设置后，再点击日志导出，正常。感觉和代码运行有关系。        
 
 
 过滤日志：
-logcat | grep AndroidRuntime   
-
-
-修改设备分辨率：
-adb shell wm size 2560x1440
-设置density
-adb shell wm density 240
-
+adb shell logcat | grep AndroidRuntime   
 
 adb shell logcat | grep BCM_MFS_Swt  一定要注意大小写，后面的过滤条件要跟矩阵表的一致。
 
@@ -1043,10 +930,6 @@ logcat | grep SomeIp 过滤someip信号
             type = String.class,
             changeMode = CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_CONTINUOUS
     )
-
-
-adb启动 carsettings提供的contentprovider
-adb shell content call --uri content://com.mega.carsettings.unity --method get_car_color --arg com.mega.carsettings
 
 
 Ubuntu下安装adb和fastboot方法如下：
@@ -1083,6 +966,7 @@ MasterGo
 youchang.huang@megatronix.co
 密码：
 Hyc@123456
+
 
 车模按钮跟随系统按键音：
 AudioManager audioManager = (AudioManager) AppGlobals.getInitialApplication()
@@ -1136,16 +1020,6 @@ adb shell setprop persist.vendor.usb.mode host
 
 
 
-使用以下命令查看APK签名：(只能看v1签名)
-jarsigner -verify -verbose -certs app-release.apk
-有v2签名的，可以用这个：
-apksigner verify -v --print-certs xxx.apk 
-
-
-RW-我的仪表 看板：
-http://jira.i-tetris.com/secure/Dashboard.jspa?selectPageId=13050#
-
-
 adb shell setprop show.wheel.help 1 给属性show.wheel.help设置值为1 ，之前需要 adb root;adb remount 
 adb shell getprop show.wheel.help  返回 1
 代码中对应：MegaSystemProperties.getInt("show.wheel.help",0); 
@@ -1170,9 +1044,6 @@ privapp-permissions-redwood.xml这个文件在板子里的目录是：/vendor/et
 8358的systemui权限更改，应该参考：https://git.i-tetris.com/c/qcom/qcm/android/device/mega/maple/+/865541  上面这个不需要改
 
 
-prebuild mk  文件中配置了LOCAL_VENDOR_MODULE := true，表明app放在vendor目录下，
-比如 RedwoodCarController在/vendor/priv-app目录， 则permissions文件目录应该是 这种：vendor/etc/permissions/privapp-permissions-redwood.xml
-prebuild mk  文件中没有配置LOCAL_VENDOR_MODULE := true，表明app放在system目录下，
 比如 RedwoodSystemUI 在/system/system_ext/priv-app， 则permissions文件目录应该是 这种：/system/system_ext/etc/permissions/com.android.systemui.xml
 也有在在/system/priv-app，则permissions文件目录应该是 这种：/system/etc/permissions/com.android.systemui.xml
 
@@ -1190,16 +1061,11 @@ user=_app seinfo=platform name=com.lion.appfwk.navi domain=platform_app type=app
 AA方控的逻辑，都在redwood 0522分支改。
 国际的在各个代码的主线分支改；打包是单独的项目，device是从e0x独立出来的。
 
+
 主题apk安装以后，调用ThemeControl里主题切换方法，可以直接切换；
 如果把主题apk拷贝到 vendor/overlay目录下，需要重启后，再调用ThemeControl里主题切换方法才能生效。
 
 
-
-大家分析是对手件问题的，请严格按照以下流程走起来：
-1. 备注写明分析的依据和证据；
-2. EpicLink标记为对手件问题；
-3. 问题经办人指给同步专员：李静杰
-4. 标签里打上：合作方_XX（例如奇瑞的问题就选合作方_奇瑞）
 
 如果板子连电脑连不上，做如下排查：
 1.确认是adb模式：工程模式中切换或者u盘根目录的.usb脚本
@@ -1220,33 +1086,27 @@ ubuntu系统使用 sqlite数据库的可视化工具：
 下线配置页面都是0的原因，MessageCenterUtil: [ (MessageCenterUtil.java:131)#sendMessage ]send msg, topic=internal_uds/req 发送的请求，但是没有返回；或者返回的都是0
 
 
-大家尽量按照这个来关闭bug
-【原因】切换模式，界面activity会走destroy。而unity和activity生命周期一致，导致unity走destroy。unity在destroy的时候会杀死当前进程。
-【解决方案】修改unity和activity生命周期的一致性，切换模式时，禁止unity走destroy。
-【验证】已经修复，在20230810之后的apk验证
-
-
 
 【Ubuntu】解决中文变繁体
 系统中文输入法默认成为了繁体中文
 解决：输入法切换成中文，然后 ctrl + shift + f
-使用上面三个组合键，按一次切换成简体，再按一次成繁体...
+使用上面三个组合键，按一次切换成简体，再按一次成繁体
+
+
 
 Android adb获取手机 cpu架构（arm64-v8a 等平台）
 adb shell
 getprop ro.product.cpu.abi
 arm64-v8a
 
+
 日志中：表示进程启动，1668 就是进程号，通过进程号可以在nodpad++,ctrl+f,find incurrent 找到进程的日志，然后看看进程在哪里停止，就表示进程死亡。
 I am_proc_start: [0,1668,1000,com.android.car.settings
+
 
 主机重启：
 PowerManagerService     system_process                       D  reboot, reason = null caller pid: 28276, Caller uid: 1000
 可以看到是pid 28276 的进程发起的重启。
-
-ubuntu文件无权限操作，
-sudo nautilus
-在打开的文件管理器里操作。
 
 
 外部jira车控筛选器：
@@ -1284,13 +1144,6 @@ adb shell logcat >logcat.log
 gedit logcat.log 打开这个日志
 
 
-蓝牙协议的问题，需要罗能强看下
-framework问题找张忠毅
-
-方向盘需求问题找 周倪青
-TBOX接口找张忠毅
-
-
 globalid使用三码生成，三码不变，globalid不会变。如果实车三码没有变化，globalid就不会过期。
 globalid过期，是因为三码被占用了，也只会出现在测试场景
 使用实车真实三码，不会有这个问题。
@@ -1304,10 +1157,6 @@ vin码在车子下线时 诊断仪写入ECU内，通过 CarPropHelper.getPropert
     <uses-permission android:name="android.permission.INTERACT_ACROSS_USERS_FULL" /
 
 
-
-
-
-
 使用同一个shareId，系统会认为是相同的应用。
 对其中一个做了sd卡权限授权，其他的也就授权了。
 麦克风，位置，摄像头 三个权限可以通过开关去打开关闭。
@@ -1318,7 +1167,10 @@ vin码在车子下线时 诊断仪写入ECU内，通过 CarPropHelper.getPropert
 
 install apk报错：
 adb: failed to install RedwoodCarSettings.apk: Failure [INSTALL_FAILED_TEST_ONLY: installPackageLI]
-解决方法：adb install -t test.apk
+解决方法：adb install -r -t test.apk
+-r -t的含义：请把这个 APK 安装到手机上；如果已经有了就覆盖安装（并保留数据），即便这个包被标记为了测试版也请允许安装。
+还有一个常用的参数是 -d (Downgrade)，它允许你安装一个比当前版本号更低的版本（即“降级安装”）
+
 
 安装apk遇到：
 adb: failed to install RedwoodHvac.apk: Failure [INSTALL_FAILED_INVALID_APK: Package com.mega.redwoodhvac is a persistent app. Persistent apps are not updateable.]
@@ -1332,10 +1184,6 @@ reboot
 
 grep -rn "abcd"  可以从当前目录中过滤出abcd字段。
 
-
-
-user版本强制安装apk
-安装apk，可以使用 adb isntall -r -t apk
 
 
 输入这个命令切换白天黑夜模式：adb shell "su 0 cmd uimode night yes"
@@ -1377,12 +1225,6 @@ VehSettings中的对象，如果是这么使用：
 
 
 
-on -T msg_center_t -u msg_center msg_center_test -t update/mode '{"extension":null,"relative":false,"time":0,"type":4194304,"unit":"","valid":true,"value":1}'
-
-on -T msg_center_t -u msg_center msg_center_test -t Android/Reset '{"extension":null,"relative":false,"time":0,"type":4194304,"unit":"","valid":true,"value":1}'
-
-
-
 查看android进程是否起来：
 redwood:/ # ps -e | grep auto
 audioserver     415      1 12347996  4748 binder_thread_read  0 S android.hardware.automotive.audiocontrol@2.0-service
@@ -1395,15 +1237,14 @@ system         4895    369 16733808 109852 do_epoll_wait      0 S com.iflytek.au
 u0_a30         5065    373 2689032 185612 do_epoll_wait       0 S com.iflytek.autofly.iqiyi
 
 
-    int pdu1H = -16416000;
-        MLog.d(TAG, "parse pdu1H = " + Integer.toBinaryString(pdu1H));
-        int data = pdu1H >> 24; //高位补的都是1 
-         int len = (pdu1H >>> 24) - 1; //高位补的都是0.很多情况下，需要高位补0
-        MLog.d(TAG, "parse data = " + data);
-        MLog.d(TAG, "parse data = " + Integer.toBinaryString(data));
 
+int pdu1H = -16416000;
+MLog.d(TAG, "parse pdu1H = " + Integer.toBinaryString(pdu1H));
+int data = pdu1H >> 24; //高位补的都是1 
+int len = (pdu1H >>> 24) - 1; //高位补的都是0.很多情况下，需要高位补0
+MLog.d(TAG, "parse data = " + data);
+MLog.d(TAG, "parse data = " + Integer.toBinaryString(data));
 
- ps -ef | grep center
  
 电源模式对应  d1：on    d2：comfort  d3：off   d4:拔小电瓶   d3对应standby
 
@@ -1416,26 +1257,9 @@ reboot
 现在直接push 会unity那个so 找不到的问题
 所以改成了install 的方式     起来后 可能要手动点击把进程起起来
 install 的 话 相当于是普通app了  进程不会自启 ，调试的是时候第一次启动很慢是正常的
-如果改dock栏了 install 0 应该可以直接推SystemUI
-
-
-将纵置增程在0703分支添加的代码，merge到1115分支的经验：
-先切换到carservice 1115分支，把 carservice 0703整体合并到 1115,肯定会有几个类冲突。
-然后新建文件夹，单独把carservice工程落下来，切换到0703分支,查看上面冲突的几个类的提交记录，把改动的地方拷贝到 1115分支对应的类里。
-然后再统一提交到1115分支。
-
-carsetting的国际分支 feature/kirkwood_hqx.1.2.1_20231031
-
-
-国际的android.mk在master分支;device.mk在sop/1004分支。
 
 
 
-横置增程：feature/redwood_hqx.1.2.1_20230919 配置字： String carEngine = MegaSystemProperties.get("persist.sys.car.engine", ""); 
-IS_REEV = TextUtils.equals(carEngine,"reev_can");
-
-纵置增程：feature/redwood_hqx.1.2.1_20231115  配置字： 驱动动力形式;00,纯电动;01,增程
-纵置增程和主线一样，使用someip
 
 空调语音处理，会有此日志：
  (HvacVoiceManager.java:43)#handlerOperation ]handlerOperation = {"mode":"座椅加热","name":"座椅","mNameValue":{"direct":"+","offset":"3","ref":"ZERO","type":"SPOT"},"operation":"SET","mService":"carControl","mUser":"2"}
@@ -1471,10 +1295,6 @@ Settings.Global.putString(mContentResolver, "ProSnNumber", mSnNumber);
  Settings.Global.putString(mContentResolver, "ProHuId", mHuId);
  Settings.Global.putString(mContentResolver, "ProIccId", mIccIdNumber);
  这些码只能用于生产环境。测试环境逻辑保持不变。
-
-
-防止高斯模糊引起的异常崩溃
-RW-35075
 
 
 RWSwitch 按钮，不要调用setCheck方法，会造成死循环。 调用 setCheckedStatus 
@@ -1780,9 +1600,6 @@ grep -rn "abcd"  可以从当前目录中过滤出abcd字段。
 
 
 还有一种方案：不要动效，使用静态图片
-
-
-user版本使用adb root的时候，弹出弹框：root密码，输入 进入qnx的密码即可，比如：Mega#ICC%0630
 
 
 ssh远程：
@@ -2197,8 +2014,6 @@ AppTaskManager | CarSettingActivity android logcat中过滤多个条件日志
 
 泰维地图往hud上投屏有问题的话，找辛建建或者赵伦
 
-E0X_redwood, E0X_kirkwood sop 分支今天(20240702)及之后的 user 版本，进入QNX （串口或 adb shell 里通过 telnet 登录连接）需要输入密码：Mega#ICC%0630
-
 
 主activity是 android:launchMode="singleInstance"，在此activity启动Bactivity，状态栏切换到其他应用，再状态栏切换到车辆设置，显示Bactivity，b点击返回键，发现不是车辆设置的主页。
 原因是singleInstance自己一个activity在一个task中，所以Bactivity在另一个task中。状态来切换显示车辆设置时，拉的是Bactivity所在task，所以没有拉主页所在的task。
@@ -2357,8 +2172,6 @@ Carmodel目前没有通过systemui启动，所以调试前，需要主动run一�
         } 
 以及systemui application的 setWallpaperComponent
 
-adb root和su命令需要输入密码：Mega#ICC%0630, 自动化台架需要先执行adb shell setprop persist.adb.passwd.verify.enable false
-执行adb shell setprop persist.adb.passwd.verify.enable false 取消输入密码
 
 车辆设置显示tab，设置3d 和 2d壁纸切换，使用                       
  Settings.System.putInt(
@@ -2464,7 +2277,12 @@ AndroidStudio 卡的话，如果只是为了查代码，用这两个网站就行
 
 
 使用as打开源码，编译很慢，且无法进行索引，阅读困难
-android根目录下，集成android.iml  android.ipr   android.iws，修改android.iml中的代码目录；使用as直接打开 android.ipr即可。
+源码android根目录下，集成android.iml  android.ipr   android.iws，修改android.iml中的代码目录；使用as直接打开 android.ipr即可。
+
+另外，单独打开 源码某个工程，可以：
+/disk4t/8295_code/android/android$ aidegen vendor/mega/packages/apps/MegaSystemUI frameworks/base/  -i s -p /home/hongjie/tools/android-studio-2025.2.2.7-linux/android-studio/bin
+
+
 
 
 
@@ -2615,6 +2433,36 @@ com.mychery.carsettings
 com.mychery.carsettings.MainActivity
 
 过滤 CanManager-setSingleValue:FunctionValue  可以查看车设设置信号
+
+
+
+
+
+pag动画资源在线预览：
+https://pag.io/player.html
+
+
+
+
+
+公司的自己的网盘地址：
+https://mega-disk.megatronix.com/apps/files/?dir=/&fileid=480225  域账号
+
+信号表里的颜色标注：
+需要处理的信号统一修改成黄色；
+王锐把黄色的信号加入到Carservice以后，会改成绿色；
+上层应用开发调用信号，确认没问题，就把颜色去掉。
+
+
+
+
+
+
+adb全套命令学习
+
+git 命令学习
+
+repo 命令学习
 
 
 
