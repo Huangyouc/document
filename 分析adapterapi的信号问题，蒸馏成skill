@@ -1,0 +1,14 @@
+我现在需要你做一个skill，这个skill用来访问jira上的bug，jira单里会提供functionid（这个functionid可能出现在jira的正文中，也可能出现在备注中，也可能出现在jira的图片中），根据这个functionid，你到 /home/huangyouchang/icar资料 这个目录下找  《ICAR_FunctionID对查表.xlsx》这个表格，重点看下这个表格中表头是   “V25（国内）” 的内容，其他的表头，比如 “V25（国际）”只能参考（当国内找不到这个信息的时候，可以参考其他表头）；	从这个表中找到funtionid以后，你就可以找到这个functionid对应的输入输出信号，当然，有可能只有输出或者只有输入信号；同时，根据这个functionid，可以到 /home/huangyouchang/workspace/maple/maple/MapleEcology/adapterapi 的 TopicFunctionUtil中，找到 这个functionid对应的  VendorPropertyIds 或者 InternalPropertyIds，拿到 VendorPropertyIds 或者 InternalPropertyIds，可以到 《奇瑞Icar矩阵.xlsx》找到 这个id对应的topic和输入输出信号；
+你需要做的事情：
+1.先匹配functionid使用的输出输入信号和 VendorPropertyIds 或者 InternalPropertyIds的id对应的输入输出信号是否一致；如果一致，继续下一步；如果不一致，则抛出提示，并征求我的意见，是否进行下一步
+2.在第一步的情况下，看下functionid的表中这个functionid用的哪一个mapping，此mapping是否和 TopicFunctionUtil 中这个functionid使用的mapping是否名字一样，如果一样，继续下一步；如果不一致，则抛出提示，并征求我的意见，是否进行下一步
+3.下载jira的android日志和blf日志，先根据 VendorPropertyIds 或者 InternalPropertyIds 对应的topic，在android日志中搜索 这个topic，看下输入输出topic的日志是什么情况；然后，如果这个 id有对应的输出输入的can信号，则需要解析blf日志，看下这个can信号的情况。（如何解析blf日志，之前已经让你写过skill，DBC文件之前也告诉你在哪里了）
+
+生成的skill：
+jira-function-analyzer MP-11378 0xA014
+
+实际执行效果，有：
+
+静态校验结果中，Excel 上的 Tx 信号为 'INVALID_PROPERTY_ID'，而矩阵上为 'None'。因为这在语义上完全一致（该信号属于纯输入信号），是否同意继续进行下一步日志（Android & BLF）分析？
+
+

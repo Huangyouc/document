@@ -204,6 +204,20 @@ sudo service gdm3 restart
 然后重启电脑
 
 
+ubuntu电脑可以支持windows的远程桌面协议且高清：
+ubuntu电脑，设置，共享，打开远程桌面开关，用windows电脑AnyConnect先登录公司的vpn，然后 终端输入mstsc，弹出远程连接入口，输入自己的ubuntu的ip（10.56.xx是内网)地址就行了。
+ifconfig看自己的点奥ip地址：10.56.1.245（有线）   10.56.222.226（wifi）
+
+如果windows连接失败，试试ubuntu删除xrdp后重新连接sudo apt remove xrdp
+
+
+
+Ubuntu 系统中“文件”（即 Nautilus 文件管理器）图标点击后没反应，或者一直在转圈却打不开，通常是因为程序卡死
+终端执行：
+killall nautilus
+然后重新点击图标，或者在终端输入 nautilus 启动。
+
+
 E0X如何在 as的日志里过滤出输入信号：
 RedwoodSomeIpProperty
 并使用 No Filters
@@ -233,6 +247,11 @@ VARIANT=userdebug
 BRANCH=release_redwood_hqx.1.2.1_20230103
 OEM_VERSION=00.01.02.52
 
+8538：adb shell,然后  cat /vendor/etc/build_info可以看soc版本号
+
+或者使用 adb shell getprop | grep ro.build.date
+
+8538 ota升级之前，需要 adb root;adb enable-verity;adb reboot,然后再升级
 
 
 ota升级的时候，如果进度条很慢，可能是内存被占用，
@@ -414,10 +433,24 @@ mega	ssh://youchang.huang@git-slave-wh.i-tetris.com:29418/apps/gladius/android/c
 
 然后改成北京的地址：
 git remote set-url mega ssh://youchang.huang@git.i-tetris.com:29418/apps/gladius/android/chery/e0x/modules
+git remote set-url apps_android ssh://youchang.huang@git.i-tetris.com:29418/apps/gladius/android/chery/s59d/apk_prebuilts
+git remote set-url qcom ssh://youchang.huang@git.i-tetris.com:29418/qcom/qcm/android/vendor/qcom/proprietary/mpltb
 
+git remote set-url qcom ssh://youchang.huang@git.i-tetris.com:29418/qcom/qcm/LA.QSSI.16.0.R4/platform/packages/modules/Permission
+git remote set-url qcom ssh://youchang.huang@git.i-tetris.com:29418/qcom/qcm/android/device/mega/maple
+
+git remote set-url mega ssh://youchang.huang@git.i-tetris.com:29418/apps/gladius/android/chery/t1q/AuroraRMU
+git remote set-url mega ssh://youchang.huang@git.i-tetris.com:29418/apps/gladius/android/chery/t29/MilanCar
+git remote set-url mega ssh://youchang.huang@git.i-tetris.com:29418/qcom/qcm/android/vendor/mega/packages/apps/DvTest
+
+
+git remote set-url apps_android	ssh://youchang.huang@git.i-tetris.com:29418/qcom/qcm/android/vendor/mega/prebuilts/third_party/maple
+git remote set-url qcom ssh://youchang.huang@git-slave.i-tetris.com:29418/qcom/qcm/android/device/mega/common
 注意：有的时候 是origin，需要 把mega改成origin
 
-
+git remote set-url qcom ssh://youchang.huang@git-slave.i-tetris.com:29418/qcom/qcm/LA.QSSI.16.0.R4/platform/packages/modules/Permission
+这种地址，可能只支持读取，无法push，需要改成：
+git remote set-url qcom ssh://youchang.huang@git.i-tetris.com:29418/qcom/qcm/LA.QSSI.16.0.R4/platform/packages/modules/Permission
 
 DMS指的是驾驶员的舱内视觉检测，OMS是指乘客的舱内视觉检测
 
@@ -1058,6 +1091,15 @@ privapp-permissions-redwood.xml这个文件在板子里的目录是：/vendor/et
 #https://git.i-tetris.com/c/qcom/qcm/LA.QSSI.15.0.R2/platform/frameworks/base/+/858285   代码目录在：QSSI.15/frameworks/base/data/etc
 8358的systemui权限更改，应该参考：https://git.i-tetris.com/c/qcom/qcm/android/device/mega/maple/+/865541  上面这个不需要改
 
+8538的carmodel私有权限配置路径： /system_ext/etc/permissions/privapp-permissions-mega-maple.xml
+<privapp-permissions package="com.mega.carmodel">
+   2     <permission name="android.car.permission.CAR_POWER"/>
+   3     <permission name="android.permission.WRITE_SECURE_SETTINGS"/>
+   4     <permission name="android.permission.BIND_WALLPAPER"/>
+   5     <permission name="android.permission.MANAGE_ACTIVITY_TASKS"/>
+   6 </privapp-permissions>
+
+
 
 比如 RedwoodSystemUI 在/system/system_ext/priv-app， 则permissions文件目录应该是 这种：/system/system_ext/etc/permissions/com.android.systemui.xml
 也有在在/system/priv-app，则permissions文件目录应该是 这种：/system/etc/permissions/com.android.systemui.xml
@@ -1127,6 +1169,8 @@ PowerManagerService     system_process                       D  reboot, reason =
 外部jira车控筛选器：
 (project = RW AND issuetype = Bug AND status not in (Closed, Resolved) AND "Vehicle Model(必填)" in (E03, "All", cascadeOption(none)) AND 史诗链接 != RW-1292 AND labels not in (三无问题) OR project = RW AND issuetype = Bug AND status not in (Closed, Resolved) AND "Vehicle Model(必填)" in (E03, "All", cascadeOption(none)) AND labels is EMPTY) AND priority = "P1->High" AND assignee in (youchang.huang, ningning.qi, bin.xu, xiaolong.zheng, baojun.hu, baocheng.dong) AND created < "2023-08-22 17:00" ORDER BY assignee ASC
 
+jira搜索，可以看到本人最近查看的jira单子
+watcher = currentUser() ORDER BY updated  DESC
 
 刚开始使用滚轮按键监听，需要注意没有使用最新
 implementation "mega.core:car:$carVersion"
@@ -1151,6 +1195,18 @@ t1x 是通过mcu 读取，需要确认e0x是通过mcu读取还是someip信号读
 
 使用陈浩给的真实三码写入方式，去写入三码，试试这个方式能读取到么（此方法不可以外传，我们的测试也不要给）
 writeVinSN.sh   脚本里面的vin和sn改一下  然后adb root 之后执行下
+
+
+
+1.ICar新到B样机器，先刷SOC好，刷机电脑中已经解压好
+2.然后再adb推mcu版本到sdcard（S59D-cdc-s32k328-master-mcu_ota-4.0.0.135-20260128021332.tgz）
+先adb root
+ adb push <path> /sdcard/
+mcu_update_test -u /sdcard/S59D-cdc-s32k328-master-mcu_ota-4.0.0.135-20260128021332.tgz  //升级mcu
+mcu_update_test -a //激活mcu
+mcu_update test -r //重启mcu
+mcu_update_test -v  //查看mcu版本
+Mcu重启之后，原来的那个adb线呢就没办法连接电脑，只能换那个type c的口，才能接入adb
 
 
 
@@ -1576,6 +1632,9 @@ hud模式设置topic：HUD/HUDDisplayMode
 日志通过 CherySystemUIApplication 过滤出系统版本号
 日志通过 string_v 过滤出时间
 version name: 可以过滤出部分生态应用初始化时打印的应用的版本号
+或者qnx_version
+搜分支：
+BRANCH= 
 
 Binder.getCallingPid() 获取当前方法是哪个跨进程调用的
 
@@ -1999,6 +2058,9 @@ xdg-open . 可以使用文件打开当前的文件的目录
 8295权限目录：/system/etc/permissions/privapp-permissions-rocky.xml
 8295 systemui权限目录：/system/etc/permissions/com.android.systemui.xml
 
+FL 权限所在源码目录：
+android/android/device/mega/rocky
+
 
 Binder.getCallingPid()获取到进程pid，如果是0，应该是当前的进程。
 打印堆栈信息
@@ -2118,22 +2180,22 @@ android:persistent="true"
 
     sourceSets {
         main {
-            java.srcDirs = ['main/src']
+            java.srcDirs = ['main/sc']
             res.srcDirs = ['main/res', 'main/res-e03', 'main/res-e0y']
-            aidl.srcDirs = ['main/src']
+            aidl.srcDirs = ['main/sc']
             assets.srcDirs = ['main/assets']
             manifest.srcFile 'main/AndroidManifest.xml'
         }
         redwood {
             isRedwood = true
             isRocky = false
-            java.srcDirs = ['redwood/src']
+            java.srcDirs = ['redwood/sc']
             res.srcDirs = ['redwood/res-carsettings']
         }
         rocky {
             isRedwood = false
             isRocky = true
-            java.srcDirs = ['rocky/src']
+            java.srcDirs = ['rocky/sc']
             res.srcDirs = ['rocky/res-carsettings']
             manifest.srcFile 'rocky/AndroidManifest.xml'
         }
@@ -2371,13 +2433,20 @@ https://mega-disk.megatronix.com/apps/files/?dir=/&fileid=480225  域账号
 
 
 
+could not find a compatible repository at 'PermissionController'
+原因是这个目录不是git库，真正的git库可能是他的上级。可以通过查看当前目录是否有.git这个文件来判断当前目录是否是独立的git库。
 
-adb全套命令学习
 
-git 命令学习
 
-repo 命令学习
+ICar配置：
+氛围灯：多色车内氛围灯
+驾驶安全监测跟分心监测：dms
 
+
+
+蓝牙音乐重新上电后不恢复播放
+内部：http://jira.i-tetris.com/browse/RK-38643
+外部：http://211.159.155.78:8080/browse/RK-31578
 
 
 

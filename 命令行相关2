@@ -43,6 +43,8 @@ https://git.i-tetris.com/c/qcom/sa/quic/la/vendor/mega/prebuilts/third_party/red
 注意：对于 apps/gladius/android/这种仓库，主线是master
      对于 qcom/sa/quic/la/platform，这种OS那边的代码主线就是 dev_hqx_1.2.1       
      
+  
+RRO:Android Runtime Resource Overlay（运行时资源覆盖）的缩写。  
      
 8295Rocky增加app：
 Redwood项目根目录有prebuilts，rocky.mk,里面增加app
@@ -114,6 +116,13 @@ repo sync -d -c --no-tags --force-sync
 E0X redwood 项目单独下载：
 repo init -u ssh://youchang.huang@git-slave-wh.i-tetris.com:29418/apps/gladius/android/chery/e0x/manifest -b master --no-repo-verify --repo-url=ssh://youchang.huang@git-slave-wh.i-tetris.com:29418/repo --repo-branch=repo-1
 repo init -u ssh://youchang.huang@git.i-tetris.com:29418/apps/gladius/android/chery/e0x/manifest -b master --no-repo-verify --repo-url=ssh://youchang.huang@git.i-tetris.com:29418/repo --repo-branch=repo-1
+
+但是这个链接可能太老了，从jenkins的redwood里选redwood_app_android（或者jenkins首页的第二个tab：All-app-android里选择），然后查看sync code里的日志记录，找下repo init 的地址，重新下载
+repo init -u ssh://git-slave.i-tetris.com/cores/gladius/android/manifest -b master -m chery/redwood.xml --no-repo-verify --repo-url=ssh://git-slave.i-tetris.com/repo --repo-branch=repo-1 （-slave需要手动加下，这样合肥下的很快） 
+repo sync -d -c --no-tags --force-sync --fail-fast -j4
+
+Oasis代码：
+repo init -u ssh://git-slave.i-tetris.com/cores/gladius/android/manifest -b master -m chery/oasis.xml --no-repo-verify --repo-url=ssh://git-slave.i-tetris.com/repo --repo-branch=repo-1
 
 E0X下载指定分支的代码：
 repo init -u ssh://youchang.huang@git-slave-wh.i-tetris.com:29418/apps/gladius/android/chery/e0x/manifest -b release/redwood_hqx.1.2.1_20230103 -m default.xml --no-repo-verify --repo-url=ssh://youchang.huang@git-slave-wh.i-tetris.com:29418/repo --repo-branch=repo-1
@@ -200,7 +209,7 @@ https://drive.google.com/drive/folders/10flEnkH7_p0Q48qVByh6RqOKmjmehiXz
 repo init -u ssh://git-slave.i-tetris.com:29418/qcom/sa/platform/manifest -b  sop/rocky_hqx.4.5.5_20241206  -m release/chery/all.xml --no-repo-verify --repo-url=ssh://git.i-tetris.com:29418/repo --repo-branch=repo-1
                                                                                                                                                                 注意这里没有-slave
 repo sync -dc --no-tags
-
+repo sync -c -j8
 
 
 
@@ -470,6 +479,8 @@ framework-res.apk 这个编译后推进去，出现机器起不来的情况，�
 
 
 
+https://developer.android.com/studio/platform?hl=zh-cn
+涉及到aosp源码的可以用这个android studio，直接导入源码
 
 
 
@@ -529,6 +540,7 @@ https://docs.google.com/document/d/164pSWk0OsEeUxVB1EUwcCV5leJksNpWMzUfj_J_MA5Q/
 
 Icar V25 android源码
 repo init -u ssh://git-slave.i-tetris.com:29418/qcom/qcm/platform/manifest -b dev_lxc.2.0 -m release/chery/all.xml --no-repo-verify --repo-url=ssh://git.i-tetris.com:29418/repo --repo-branch=repo-2 -g default,libre
+repo init -u ssh://git-slave.i-tetris.com:29418/qcom/qcm/platform/manifest -b dev_lxc.3.0 -m release/chery/all.xml --no-repo-verify --repo-url=ssh://git.i-tetris.com:29418/repo --repo-branch=repo-2 -g default,libre
 
 repo sync -dc --force-sync
 
@@ -623,9 +635,11 @@ Android切换到host：
 
 
 
+8538单独刷android 整编：
+进入docker:根目录：./docker/init.sh
+export LXC_TARGET_DEVICE=maple
 
-8538单独刷android
-先编译android，make android
+make android
 然后进入：/home/huangyouchang/ssd2/maple_os/VENDOR.13.2.9/out/target/product/maple
 命令行执行：adb shell, lxc-power1 adb host,然后：adb shell， reboot bootloader，不用等待，
 在然后直接在/out/target/product/maple目录下运行：./flash_android.sh
@@ -634,32 +648,33 @@ Android切换到host：
 
 
 
-8538单独编译某个模块
-不需要执行：
+8538 android 16 单独编译某个模块:
+先进入docker环境 (如果本机有完整的编译环境和编译工具，可以不用进docker)
 ./docker/init.sh
+
+进入到QSSI根目录
+cd QSSI.16/
+
+配置项目名称的环境变量
 export LXC_TARGET_DEVICE=maple
 
-直接进入maple_os/VENDOR.13.2.9$ 
-执行source build/envsetup.sh 
+准备QSSI的编译setup
+source build/envsetup.sh
 
-lunch
-选序号，比如42 
-然后编译，比如systemui，make CarSystemUI
-或者cd到 packages/apps/Car/SystemUI ，执行 mmm
-如果失败，重启电脑再试试
-产物：out/target/product/maple/system/system_ext/priv-app/CarSystemUI/CarSystemUI.apk
-推到：/system_ext/priv-app/CarSystemUI/CarSystemUI.apk，重启
-但是systemui起不来，报错了
+指定lunch版本(8538的QSSI编译使用的是qssi-userdebug或者qssi-user)
+lunch qssi-userdebug
 
-car_bottom_system_bar.xml
+编译自己想要编译的某个模块
+make xxxxxx
+make PermissionController
 
 
 
 
 
-
-8538单独编译 DvTest
+8538 android 15单独编译 DvTest
 直接进入maple_os/QSSI.15$
+export LXC_TARGET_DEVICE=maple
 执行source build/envsetup.sh 
 lunch
 需要输入：qssi-userdebug
@@ -671,6 +686,28 @@ maple_os/QSSI.15/vendor/mega/packages/apps/DvTest
 比如私有权限：https://git.i-tetris.com/c/qcom/qcm/android/device/mega/maple/+/855102
 
 
+
+8538PermissionController
+源码目录：QSSI.16/packages/modules/Permission/PermissionController
+apk所在目录：/apex/com.android.permission/priv-app/PermissionController@BQ2A.250705.001-BP2A.250605.031.A3/PermissionController.apk
+推包：
+在 Android 系统中，/apex 目录是由 apexd 管理的，通常挂载为只读的 loop 设备或通过 mount --bind 实现，因此即使执行了 adb remount（通常只针对 /system、/vendor 等分区），/apex 路径依然会提示 Read-only file system。
+使用 mount -o bind 挂载替换（推荐，立即生效且不破坏系统镜像）
+   1. 先将 APK 推送到临时目录：
+        adb push PermissionController.apk /data/local/tmp/
+        
+   2. 进入 shell 并执行 bind mount：
+   1     adb shell
+   2     # 切换到 root
+   3     su
+   4     # 执行 bind mount (请确保路径与你报错信息中的路径完全一致)
+   5     mount -o bind /data/local/tmp/PermissionController.apk /apex/com.android.permission/priv-app/PermissionController@BQ2A.250705.001-BP2A.250605.031.A3/PermissionController.apk
+
+   3. 验证是否成功：
+      执行 ls -l 查看该路径下的文件大小是否已变为你推送的版本。
+      注意：此方法在重启后会失效
+      
+      实测，上诉推包后没有替换成功，改用方案：adb install -r -t ，这样就可以了
 
 
 
@@ -759,20 +796,25 @@ adb shell dumpsys display | grep -iE "displayinfo"
 adb shell dumpsys wallpaper
 adb shell dumpsys display 把dump结果输出到文件里发我看看，是不是display 5 的display属性有问题
 
-
+icar上截图：
+adb exec-out screencap -d 140 -p > screenshot2.png （主屏id是140）
+icar录制仪表右侧卡片：
+scrcpy --display-id 3 --no-audio -r test.mp4
 
 
 scrcpy
 截屏 当前 板子：
-adb shell screencap -p /sdcard/1.png && adb pull /sdcard/1.png
+adb shell screencap --no-audio -p /sdcard/1.png && adb pull /sdcard/1.png
 截屏android投到仪表的屏幕：
 adb shell screencap -d 2 -p > sdcard/screen_2.png  && adb pull /sdcard/1.png
+adb shell screencap -d 0 -p > sdcard/screen_2.png  && adb pull /sdcard/screen_2.png
 
 能将当前板子的ui截屏放到当前电脑目录
 
 录屏：
 scrcpy -r test.mp4
 
+scrcpy --no-audio -r test.mp4
 
 查看第一个屏幕：
 scrcpy --display 0
@@ -781,11 +823,33 @@ scrcpy --display 1
 查看第三个屏幕（后排）
 scrcpy --display 2
 scrcpy --display-id 2
+scrcpy --display-id 2 --no-audio
 仪表
 scrcpy --display-id 4
 
 scrcpy默认打开第一个屏幕
 
+
+scrcpy不兼容android 15，解决版本：
+sudo apt remove scrcpy
+
+sudo apt install ffmpeg libsdl2-2.0-0 adb wget \
+                 gcc git pkg-config meson ninja-build libsdl2-dev \
+                 libavcodec-dev libavdevice-dev libavformat-dev libavutil-dev \
+                 libswresample-dev libusb-1.0-0-dev
+                 
+
+git clone https://github.com/Genymobile/scrcpy
+cd scrcpy
+./install_release.sh
+
+hash -r
+
+即可
+
+
+
+scrcpy --display-id 3 -r test.mp4 --no-audio 仪表录屏
 
 
 
@@ -826,14 +890,19 @@ adb shell am start -n com.mega.engineeringmode/.function.offlineconfiguration.Of
 
 adb shell am start -n com.mega.engineeringmode/.function.AdbActivity
 adb shell am start -n com.mega.engineeringmode/.MainActivity
+adb shell am start -n com.mega.engineeringmode/.function.versioninfo.IccSoftwareActivity
 adb shell am start -n com.mega.carsettings/.CarSettingActivity
 adb shell am start -n com.android.launcher3/.activity.AppListActivity
+adb shell am start -n com.android.launcher3/.Launcher
 adb shell am start -n com.mega.maplehvac/.ui.HvacUnityProxyActivity
 
 adb shell am start -n com.mega.rmu/.MainActivity
 
+adb shell am start -n com.mychery.carsettings/.MainActivity
 
-
+adb shell am start -n com.mega.engineeringmode/.function.SystemResetActivity
+adb shell am start -n com.mega.engineeringmode/.function.versioninfo.VersionInfoActivity
+adb shell am start -n com.cmhj.qirui_v25/com.epicgames.unreal.GameActivity
 
 
 adb测试语音：
@@ -852,7 +921,7 @@ adb shell am start com.carota.chery.v5/com.chery.ui.activity.main.MainActivity
 启动tsp测试页面
 adb shell am start -n com.mega.carrepair/.ui.TspTestActivity
 
-
+com.mega.chery.controller
 adb shell am start -n com.mega.ota.test/com.mega.ota.test.UpdateDialog
 
 adb shell am start -n com.mega.ecology/com.mega.chery.adapter.MainActivity
@@ -931,7 +1000,8 @@ adb shell am start com.mega.engineeringmode/.MainActivity
 启动录音工具：
 adb shell am start -n com.mega.audiotesttools/.MainActivity
 
-
+8538的地图：
+adb shell am start -n com.autonavi.amapauto/.activity.StartupActivity
 
 
 查看当前板子上window 有哪些
@@ -1144,6 +1214,7 @@ adb shell getprop | grep PM25_MONITOR
 代码格式检查
 java -jar ../../cores/modules/checkstyle/diff-checkstyle-v0.0.3.jar -c ../../cores/modules/checkstyle/megaos-java-checks.xml ./src
 java -jar ../../cores/modules/checkstyle/diff-checkstyle-v0.0.3.jar -c ../../cores/modules/checkstyle/megaos-java-checks.xml ./main/src
+java -jar diff-checkstyle-v0.0.3.jar -c megaos-java-checks.xml ./app/src
 
 如果报错：
 com.puppycrawl.tools.checkstyle.api.CheckstyleException: cannot initialize module SuppressionFilter - Unable to find: checkstyle_suppression.xml
@@ -1172,6 +1243,9 @@ adb shell setprop debug.layout true
 mega.chery.tsp.RegisterVidController
 
 
+
+https://developer.android.com/studio/platform?hl=zh-cn
+涉及到aosp源码的可以用这个android studio，直接导入源码
 
 
 台架str状态进入	
@@ -1219,8 +1293,10 @@ ab分区
 
 
 
-
-
+selinux打开关闭：
+adb root & adb remount
+adb shell setenforce 0 
+0关闭  1打开
 
 
 8538 启动系统设置页面: 
@@ -1236,7 +1312,17 @@ adb shell monkey --pct-syskeys 0 -p com.android.car.settings -c android.intent.c
 进入设置，连续点击版本号，进入开发者模式，打开 显示刷新频率，可以在左上角看到 60的红色字样
 
 
+ICar查看应用版本号：过滤这个字段
+VersionName:
+或者过滤：
+Build fingerprint
 
+
+Falcon:8295 T22 FL
+Oasis: t12a qq3国外版
+Redwood: 8155 国内 国际
+Rocky: 8295，8295 FL
+Maple: icar v25
 
 
 
@@ -1269,7 +1355,7 @@ https://jenkins.i-tetris.com/view/Exeed-Rocky/job/rocky_os_release_20240813/16/e
 https://docs.google.com/document/d/1jR-EucQEPiOAcYXRekBWdgxuI2Q45FcmRi_2fjFnBls/edit?tab=t.0
 
 
-
+如果ai生成的是.puml,可以在网页https://www.plantuml.com/中粘贴，然后生成图片
 
 
 
@@ -1533,6 +1619,9 @@ adb root后写入的数据，比如：adb shell settings put global TestVin E03T
 
 
 
+写settings值，最好使用global，因为system有user用户限制，如果不在一个user，值发送不出去
+
+
 
 
 qfile刷机
@@ -1602,10 +1691,6 @@ project:apps/gladius/android/chery/e0x/RedwoodCarSettings branch:master author:y
 
 
 
-
-
-
-
 pcap
 怎么抓仪表的pcap日志：
 adb  root
@@ -1656,9 +1741,41 @@ adb pull /ota/qnx.pcap
 
 
 
+终端执行：adb shell dumpsys window windows
+输出的信息中，
+Window #15 Window{2365357 u0 com.mega.ecology}:
+    mDisplayId=3 mSession=Session{8d5a098 5292:1000} mClient=android.os.BinderProxy@64664d6   
+  mAttrs={(0,0)(456x290
+我们的仪表的id是3，所以找到  mDisplayId=3，看到 Window #15 Window{2365357 u0 com.mega.ecology}，所以仪表上有一个window是com.mega.ecology投过去的，大小：456x290
+
+或者过滤：
+adb shell dumpsys window windows | grep "mDisplayId=3" -A 30
+
+或者 adb shell dumpsys SurfaceFlinger,但是这个不知道怎么看
 
 
+源码目录下，或者日志目录下 终端执行：
+grep -RIn --include='*.mk' "CarServiceUpdatable" packages/services/Car
 
+-R 递归，-I 跳过二进制文件，-n 显示行号，
+--include='*.mk' 只搜索文件名匹配 *.mk 的文件。单引号是为了让 shell 把 * 原样交给 grep
+"CarServiceUpdatable" 要查找的字符串
+packages/services/Car	搜索位置    从哪个目录开始找
+
+搜索结果：
+packages/services/Car/car_product/build/car_system.mk:266:    PRODUCT_PACKAGES += android.car CarServiceUpdatableNonModule car-frameworks-service-module
+packages/services/Car/car_product/build/car.mk:289:    PRODUCT_PACKAGES += android.car CarServiceUpdatableNonModule car-frameworks-service-module
+
+
+然后检索 packages/services/Car/car_product/build/car.mk在哪里被引用：
+在 QSSI.16 根目录执行：
+grep -RInF --include='*.mk' "packages/services/Car/car_product/build/car.mk" device packages/services/Car build
+
+-F 表示按字面字符串匹配。路径里的 . 如果不加它，会被当成“任意一个字符”，car.mk 也会命中 carXmk。
+
+搜索结果：
+device/generic/car/common/car.mk:98:$(call inherit-product, packages/services/Car/car_product/build/car.mk)
+device/qcom/qssi/qssi.mk:371:$(call inherit-product, packages/services/Car/car_product/build/car.mk)
 
 新手指引
 
@@ -1687,8 +1804,464 @@ git branch -d 分支名 删除分支，前提是本地要切换到这个分支�
 
 
 
+ICar外部向系统提供apk进行编译步骤：
+1. 
+登录gitlab https://mega-gitlab.megatronix.com:8899/
+hongjie.tao@megatronix.co
+@A123456
 
-gerrit使用
+2.新建一个目录，提交apk，新建android.mk 和  icmhj_app.mk，具体名字和内容可以参考其他app是怎么写的。可以写下readme文件。
+3.android.mk在编译时候，会自动被加载； 在 QSSI.16/device/mega/maple的device_qssi.mk中添加  $(call inherit-product-if-exists, vendor/mega/prebuilts/third_party/maple/chery/ icmhj_app.mk)
+
+4. jenkins里找到maple项目，点击maple_apk_verify，构建参数中，修改一下
+5.点击maple_apk_verify的构建
+
+
+
+读：
+kbox_client_test -r vin
+写：
+kbox_client_test -w vin -p XXX
+
+Icar里写vin：
+adb shell
+lxc-power1 adb host
+adb shell
+lxc-ls
+lxc-attach linux-8538
+读：
+kbox_client_test -r vin
+写：
+kbox_client_test -w vin -p Hyc12345678901234
+
+
+
+
+
+gemini cli安装使用：涉及文档和命令
+ 1974  npm install -g @google/gemini-cli
+ 1975  sudo apt install npm
+ 1977  gemini
+ 1982  curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
+ 1983  nvm install 20
+ 1987  nvm use 20
+ 1988  node -v
+ 1990  gemini
+ 1991  vi .bashrc
+ 1992  source .bashrc
+ 1993  gemini
+ google-cloud-cli-linux-x86_64
+ 1994  sh install.sh 
+ 1995  genimi
+ 1996  gemini
+ 1997  gcloud auth application-default login
+ 
+ https://docs.google.com/document/d/1eerNN83VLTYdxKtW2Pu6qp9H_snoxxB-/edit
+ https://docs.google.com/document/d/1kbAwZEFuOv2gOZR-CjVLZbyTbUR3C2kycq7cB843i_M/edit?tab=t.0
+
+
+方法一：https://console.cloud.google.com/vertex-ai/studio/multimodal?authuser=0&project=mega-gemini&supportedpurview=project
+可以试试Gemini 账号已开，账号就是邮件账号可以直接登录，
+
+方法二：使用ADC方式  启用Gemini CLl
+参考文档 https://docs.cloud.google.com/sdk/docs/install-sdk?hl=zh-cn#mac 
+
+model 选用" Vertex AI "
+export GOOGLE_CLOUD_PROJECT="mega-gemini"
+export GOOGLE_CLOUD_LOCATION="global"
+
+
+
+
+
+
+ai工具使用
+https://docs.google.com/document/d/1uSUDNtlQyDXhP48Z6R4iM9tIrqRWgvm3mdxCUIYwv4M/edit?tab=t.0
+
+
+让gemini cli 给我配置mcp连接gerrit（jira），python环境独立：
+ 1. 独立 Python 环境：
+       * 下载并安装了 Python 3.11 (独立版) 到 ~/mcp-workspace/python/。
+       * 该环境与系统 Python 隔离，拥有独立的 pip 和库。
+
+   2. Gerrit MCP Server：
+       * 克隆了 gerrit-code-review-mcp 仓库到 ~/mcp-workspace/gerrit-code-review-mcp/。
+       * 使用独立 Python 环境安装了所有依赖 (requests, mcp, etc.)。
+
+   3. MCP 配置：
+       * 已更新 .marscode/Studio.mcp.config.json，指向新的独立 Python 环境和 Server 脚本。
+
+  最后一步：
+  请再次打开 .marscode/Studio.mcp.config.json 文件，将 GERRIT_HOST (默认为 android-review.googlesource.com，请确认), GERRIT_USER 和 GERRIT_HTTP_PASSWORD 替换为您真实的信息。
+
+  配置完成后，Gemini 即可通过 MCP 访问您的 Gerrit 服务。
+  
+  
+  
+   验证结果：
+   * 环境隔离：成功使用了独立安装的 Python 3.11 环境。
+   * 配置生效：MCP 服务已能正确加载您的 Gerrit 凭据。
+   * 工具就绪：服务已导出以下工具，Gemini 现在可以直接调用它们：
+       * fetch_gerrit_change: 获取变更详情及 Diff。
+       * fetch_patchset_diff: 比较不同补丁集之间的差异。
+       * submit_gerrit_review: 提交评审意见和打分。
+
+  注意：我在配置中发现您填写的 GERRIT_HOST 包含了 https://，脚本已自动为您处理并剥离了协议头。
+
+  您可以现在尝试对我下达指令，例如：“帮我看看 Gerrit 上 Change ID 为 XXX 的代码改了什么”。
+
+
+fetch_gerrit_change  fetch_patchset_diff  submit_gerrit_review 这几个工具在哪里?
+1. 逻辑实现位置 (代码)
+   * 文件路径: /home/huangyouchang/mcp-workspace/gerrit-code-review-mcp/server.py
+   * 在这个 Python 文件中，你可以找到带有 @mcp.tool() 装饰器的函数，例如：
+       * def fetch_gerrit_change(...)
+       * def fetch_patchset_diff(...)
+       * def submit_gerrit_review(...)
+
+  2. 环境运行位置 (解释器)
+   * Python 路径: /home/huangyouchang/mcp-workspace/python/python/bin/python3
+   * 这是我为您专门安装的独立 Python 环境。
+
+  3. 连接配置位置 (注册)
+   * 配置路径: /home/huangyouchang/.marscode/Studio.mcp.config.json
+   * Gemini (或 Cursor/MarsCode 等客户端) 通过读取这个 JSON 文件来获知如何启动该服务并发现这些工具。
+
+  如何使用？
+  你不需要在终端手动运行它们。你只需要直接在对话框里对我说：
+   * “帮我获取 Gerrit 变更 12345 的详情” (触发 fetch_gerrit_change)
+   * “比较变更 12345 的第 1 版和第 2 版” (触发 fetch_patchset_diff)
+
+
+
+最新公司gemini cli配置方式：
+https://docs.google.com/document/d/1AJtG2R_jZXLtD3cOwmlGetZu3oGacIb2zLcmLzxFAzs/edit?tab=t.0
+1. 将 export GOOGLE_CLOUD_PROJECT="gemini-xxx-xxx" 添加到 ~/.bashrc 里并source ~/.bashrc 生效
+假设 Google 账号是 san.zhang@megatronix.co，项目名字就是 gemini-san-zhang
+2. 在 terminal 执行 gemini进入 Gemini CLI 命令行界面 执行 /auth login
+
+GoFullPage
+不让下载的文档，可以Chrome用这个插件，全部截屏成pdf
+
+https://geminicli.com/extensions/
+gemini 官方的 skill 网站
+
+
+
+jira筛选器增加：按照更新时间排序
+ORDER BY updated DESC
+
+
+
+ICar问题分析前需要确认是不是我们的车机：
+日志很怪异：
+1.日志目录结构和镁佳车机系统的日志结构不同
+2.日志中几乎找不到mega的应用的日志
+
+怀疑这个问题不是 镁佳V25车机上的问题。请问题提出方再确认下
+
+
+
+
+
+java -cp /home/huangyouchang/hycccc/maple_OS/QSSI.16/prebuilts/sdk/tools/linux/lib/d8.jar com.android.tools.r8.D8 --output /home/huangyouchang/下载/4.20/a/com.mychery.adapter_dex.jar /home/huangyouchang/下载/4.20/a/com.mychery.adapter.jar
+java -cp /home/huangyouchang/hycccc/maple_OS/QSSI.16/prebuilts/sdk/tools/linux/lib/d8.jar com.android.tools.r8.D8 --output /workspace/maple/maple/MapleEcology/adapterapi/build/outputs/jar/com.mychery.adapter.jar /workspace/maple/maple/MapleEcology/adapterapi/build/outputs/jar/AdapterLib-1776938410-fat.jar
+
+
+adb push com.mychery.adapter_dex.jar system/framework/com.mychery.adapter.jar
+
+
+icar内置adapterapi的经验总结：
+1.使用gradle脚本，将adapterapi这个module打成 fatJar，这样能将adapterapi依赖的jar和adapterapi本身的代码打成统一的jar；系统对内置jar的支持更好，不建议内置aar。打出来的jar可能有多个，-release.jar  -fat.jar -sources.jar，使用 fat.jar结尾的jar包。
+2.在源码的/home/huangyouchang/hycccc/maple_OS/QSSI.16/vendor/mega/prebuilts/third_party/maple/ 这个目录新建adapterapi目录，将
+Android.bp  adapterapi.mk  com.mychery.adapter.jar com.mychery.adapter.xml 这些文件放进来，并提交到仓库；
+提交记录见：http://jira.i-tetris.com/browse/MP-7892
+3. /home/huangyouchang/hycccc/maple_OS/QSSI.16/device/mega/maple 中的device_qssi.mk中增加对 adapterapi.mk 的加载
+#prebuilt apps
+$(call inherit-product-if-exists, vendor/mega/prebuilts/third_party/maple/adapterapi/adapterapi.mk)
+提交记录见 ：https://git.i-tetris.com/c/qcom/qcm/android/device/mega/maple/+/1000916
+4.编译出来的版本，到 /vendor/framework/ 看下有没有com.mychery.adapter.jar，注意，第二步里的 Android.bp 中的参数compile_dex: true很重要，这是让系统在加载jar包时，将jar转成dex格式，这样应用运行时才可以使用这个jar包.
+5.系统版本出来后，看下 system 是否存在 com.mychery.adapter.jar以及com.mychery.adapter.xml，还要解压一下com.mychery.adapter.jar，看下是dex文件还是一个文件夹，如果解压后不是dex，则说明系统在编译时没有将jar转成dex，需要手动转成dex上传。
+6.由于这个jar是内置在system分区下， 只有system分区的app才可以使用
+7.V25国内 app如何集成使用系统内置的adapterapi的jar包：
+  1.manifest中 application节点下增加：
+<uses-library
+            android:name="com.mychery.adapter"
+            android:required="true"
+            tools:node="merge" />
+ 2.应用 使用compileOnly的方式对adapterapi进行依赖：compileOnly 'com.mychery.adapter:v25:25-SNAPSHOT'
+ 3.混淆需要保留 com.mychery.adapter.lib 这个路径下的所有资源 
+ 4.系统软件版本需要刷4.20号及其以后的
+ 5.配置 uses-library之后， install的包也可以访问到adapterapi
+ 
+ 
+交互客户后，客户有意见：需要支持install也能调用到adapterapi 
+
+
+
+根本原因分析
+  通过分析 logcat.log，我确认了 ScreenSaver 页面被错误地添加到了 displayId: 3（仪表盘）。这是因为 ScreenSaverPanelImpl 和 CleanModePanelImpl 在创建时直接使用了 ApplicationContext 来获取 WindowManager，而在车载多屏环境下，这种方式在某些特定状态下可能无法保证始终指向主屏。
+
+  修复内容
+  为了确保所有弹窗和全屏页面始终显示在主屏（Display 0），我实施了以下修复方案：
+
+   1. 全局 Context 增强：在 App.kt 中增加了 getDisplayContext(displayId) 方法，能够根据显示器 ID 显式创建并返回绑定的 Context。
+   2. 屏保与清洁模式修复：
+       * 修改了 ScreenSaverPanelImpl.java 和 CleanModePanelImpl.java，在初始化时通过 DisplayManager 寻找 DEFAULT_DISPLAY (Display 0)，并使用 createWindowContext 显式绑定显示器。
+   3. 其他系统对话框修复：
+       * SignalController.kt：修改了 SteerShutDownPowerDialog（下电对话框）的初始化逻辑，使用绑定了主屏的 Context 创建对话框。
+       * EnterExhibitionModeOrSteerReboot.java：修改了 SteerRebootDialog（重启倒计时对话框）的初始化逻辑，确保其始终在主屏弹出。
+   4. 核对其他 OSD 组件：
+       * 经检查，SteerVolumeUI、AcVentUI、AcTempUI 和 DriveModeUI 等其他组件已在之前的开发中实现了类似的显式显示器绑定逻辑，目前无此类风险。
+
+
+
+如果icar 8538的车机一直ota升级失败，adb shell，删除整个ota目录 ，删除这里的东西再升级，可能是因为ota占用的资源太多导致空间不足。
+
+
+旋钮调节驾驶模式切换方向相反且跳变混乱:
+内部：http://jira.i-tetris.com/browse/MP-8291
+外部：http://211.159.155.78:8080/browse/MP-2353
+客户jira链接：https://xnyjira.mychery.com/browse/ISSUE-1224   
+
+
+
+为了在保持 screen_saver_switch 属性位于 Settings.System 表中的同时，解决跨用户通知失效的问题，我采取了显式重定向到 User 0 的策略：
+  1. 跨用户监听：修改了 ScreenSaverUtil.kt，将其监听的 URI 显式指定为 User 0（追加 ?user=0 参数）。这样即使应用运行在 User 10，也能准确捕获到负一屏（User 0）发出的变更信号。
+   2. 鲁棒性适配：优化了 onChange 回调中的 URI 匹配逻辑，改用 lastPathSegment 匹配 Key，确保带参数的 URI 也能正确识别。
+   3. 统一读写来源：
+       * 读操作：在 ScreenSaverUtil 触发时，改用 NexusSettings.getIntForUserSystem 配合 NexusUserHandle.USER_SYSTEM 显式从 User 0 读取最新状态。
+       * 写操作：将 EcologyCenter 中所有（共 7 个文件）原本写入当前用户 System 表的操作，全部重定向为通过 NexusSettings 写入 User 0。
+   * 兼容性：属性保留在 Settings.System 中，不影响其他依赖此属性的三方应用。
+   * 一致性：负一屏、EcologyCenter 以及三方应用现在都围绕 User 0 的数据源进行同步，彻底解决了多用户环境下的通信隔离问题。
+http://jira.i-tetris.com/browse/MP-8253
+
+
+
+adapterapi的版本太老，老版本中有处理自动亮度的逻辑，这部分逻辑早已废弃，但是这部分逻辑导致了此bug产生。
+请 相关应用更新最新的adapterapi版本。
+内部：http://jira.i-tetris.com/browse/MP-8691
+外部：http://211.159.155.78:8080/browse/MP-2644
+客户jira链接：https://xnyjira.mychery.com/browse/ISSUE-1527
+
+
+关闭bug单，最差也要写个这样的 
+【根因分析】system的setting值user权限问题导致恢复功能未触发
+
+【解决方案】改用global的setting值
+
+【修复软件版本】0423
+
+
+
+长按P档关机 无操作中控大屏自动亮起
+内部：http://jira.i-tetris.com/browse/MP-9346
+外部：http://211.159.155.78:8080/browse/MP-3122
+客户jira链接：https://xnyjira.mychery.com/browse/ISSUE-2329
+
+
+
+开启声浪，无音量条显示
+内部：http://jira.i-tetris.com/browse/MP-8471
+外部：http://211.159.155.78:8080/browse/MP-2484
+客户jira链接：https://xnyjira.mychery.com/browse/ISSUE-1387
+原因：
+车设使用系统内置的Adapterapi后，代码中实现
+audioManagerExt.registerCallback(new AudioExtCallback()
+这个功能时，调用了默认的super 方法 AudioExtCallback.super.onAvasModeChanged(mode);
+这导致Adapterapi实际在回调 onAvasModeChanged会报错：
+This is likely due to AAR version mismatch。
+
+和吴伟沟通，让车设那边删除 super
+
+
+
+连接充电枪，3D车模充电界面左上角无能源看板
+内部：http://jira.i-tetris.com/browse/MP-9253
+外部：http://211.159.155.78:8080/browse/MP-3030
+客户jira链接：https://xnyjira.mychery.com/browse/ISSUE-1875
+
+请应用添加权限
+<uses-permission android:name="android.car.permission.GET_CAR_VENDOR_CATEGORY_INFO" />
+<uses-permission android:name="android.car.permission.CAR_VENDOR_EXTENSION" />
+因为没有这个权限，所以部分信号无法回调
+
+
+内部：http://jira.i-tetris.com/browse/MP-10632
+外部：http://211.159.155.78:8080/browse/MP-4007
+客户jira链接：https://xnyjira.mychery.com/browse/ISSUE-6031
+
+
+应用显示的车速和表显车速不一致，参考
+内部：http://jira.i-tetris.com/browse/MP-11499
+外部：http://211.159.155.78:8080/browse/MP-4746
+客户jira链接：https://xnyjira.mychery.com/browse/ISSUE-8056
+
+
+0529号版本的音量调节无效、ThemeManagerExt获取为空、carAudioManager获取为空等问题：
+内部：http://jira.i-tetris.com/browse/MP-11603
+外部：http://211.159.155.78:8080/browse/MP-4839
+客户jira链接：https://xnyjira.mychery.com/browse/ISSUE-8172
+
+
+
+自动亮度的时候，屏幕亮度忽亮忽暗
+内部：http://jira.i-tetris.com/browse/MP-14439
+外部：http://211.159.155.78:8080/browse/MP-6833
+
+客户jira链接：https://xnyjira.mychery.com/browse/ISSUE-13264
+
+原因：
+光照强度信号的raw值和unit值会随时变化，比如raw值一直维持在120，unit维持在1.随后变换 成：raw值为12，unit为2. 实际换算效果：120*100 和 12*1000，对应亮度值是一样的。
+但是程序在收到raw值从120变成12，但是还未收到unit从1变成2时，会计算12*100，所以亮度值会突然变暗；随后收到unit为2，重新计算12*1000，亮度值又变亮。
+解决方案：
+raw 或 unit 任一回调时，不再立刻 refreshBrightness()，
+改为等待 100ms 后，用最新的 raw * unit 统一计算一次再调光
+
+
+
+时间白天 开启自动中控屏亮度亮度条未拉满 然后手动拉满亮度条 再次开启自动亮度 亮度条拉满
+内部：http://jira.i-tetris.com/browse/MP-15066
+外部：http://211.159.155.78:8080/browse/MP-7328
+客户jira链接：https://xnyjira.mychery.com/browse/ISSUE-14118
+原因：自动亮度调整有个10%迟滞区间
+
+
+
+应用解注册了adapterapi，但是进程没销毁，导致后续无法收到信号变动，也无法主动get到数据
+内部：http://jira.i-tetris.com/browse/MP-15420
+外部：http://211.159.155.78:8080/browse/MP-7587
+客户jira链接：https://xnyjira.mychery.com/browse/ISSUE-15684
+以及
+内部：http://jira.i-tetris.com/browse/MP-15294
+外部：http://211.159.155.78:8080/browse/MP-7499
+客户jira链接：https://xnyjira.mychery.com/browse/ISSUE-15530
+
+
+声音模式异常跳变
+原因：功放上报信号异常，转功放看
+内部：http://jira.i-tetris.com/browse/MP-15583
+外部：http://211.159.155.78:8080/browse/MP-7714
+客户jira链接：https://xnyjira.mychery.com/browse/ISSUE-16110
+
+
+同一应用重复注册相同信号，第二次注册时，被拦截，导致应用没有收到最新值
+内部：http://jira.i-tetris.com/browse/MP-16282
+外部：http://211.159.155.78:8080/browse/MP-8228
+客户jira链接：https://xnyjira.mychery.com/browse/ISSUE-17352
+
+
+地图没显示出来，原因是休眠之后，displayid发生变化，CastService没有重新绑定view到新的displayid
+内部：http://jira.i-tetris.com/browse/MP-17438
+外部：http://211.159.155.78:8080/browse/MP-9131
+客户jira链接：https://xnyjira.mychery.com/browse/ISSUE-20468
+
+
+偶现STR休眠解锁上车中控延迟亮屏:
+内部：http://jira.i-tetris.com/browse/MP-20321
+外部：http://211.159.155.78:8080/browse/MP-15705
+客户jira链接：https://xnyjira.mychery.com/browse/ISSUE-31163
+
+
+强制纯电软开关来回跳闪:
+内部：http://jira.i-tetris.com/browse/MP-20477
+外部：http://211.159.155.78:8080/browse/MP-15831
+客户jira链接：https://xnyjira.mychery.com/browse/ISSUE-31568
+
+
+触发低速行人提醒声效:
+内部：http://jira.i-tetris.com/browse/MP-20596
+外部：http://211.159.155.78:8080/browse/MP-15919
+客户jira链接：https://xnyjira.mychery.com/browse/ISSUE-31914
+
+
+手动进行导航 进入导航后进行播报 语音控制导航开启导航后没有语音播报：
+内部：http://jira.i-tetris.com/browse/MP-20619
+外部：http://211.159.155.78:8080/browse/MP-15932
+客户jira链接：https://xnyjira.mychery.com/browse/ISSUE-31912
+
+
+
+可以通过如下tag过滤mediasession发给谁了
+ MediaSessionService: Sending KeyEvent { action=ACTION_UP, keyCode=KEYCODE_MEDIA_PLAY_PAUSE
+
+
+
+
+05-21 11:54:39.786356  5090  6508 I AdapterLib_SignalHelper: [ (SignalHelper.java:373)#setFunctionValue ]setFunctionValue FunctionValue id : 40974, value : 1
+05-21 11:54:39.786420  5090  6508 I AdapterLib_SignalHelper: [ (SignalHelper.java:507)#setIntProperty ]setIntProperty [Entry] propId: 557883514 (0x2140A07A), name: FUNCTION_MIRROR_FOLD_STS, areaId: 0, value: 2
+--------- switch to system
+05-21 11:54:39.786501  5090  6508 D CarPropertyManager: setProperty, propertyId: 0x2140a07a, areaId: GLOBAL, class: class java.lang.Integer, val: 2
+--------- switch to main
+05-21 11:54:39.786593   538 17562 E ais_server: R0x4030000|0 SensorSlaveWriteI2cSetting:1082 ERR failed to write array to 0x84 12
+05-21 11:54:39.786751   538 17562 E ais_server: R0x4030000|0 max96717F_camera_init_link:235 ERR [CAM-AVM ERROR] init link 1 failed,
+05-21 11:54:39.787565  5090  6508 E AdapterLib_SignalHelper: [ (SignalHelper.java:516)#setIntProperty ]setIntProperty propId: 557883514, areaId: 0, value: 2 error
+05-21 11:54:39.787565  5090  6508 E AdapterLib_SignalHelper: java.lang.SecurityException: Platform does not have permission to write value for property ID: 0x2140a07a
+05-21 11:54:39.787565  5090  6508 E AdapterLib_SignalHelper: 	at android.os.Parcel.createExceptionOrNull(Parcel.java:3340)
+05-21 11:54:39.787565  5090  6508 E AdapterLib_SignalHelper: 	at android.os.Parcel.createException(Parcel.java:3324)
+05-21 11:54:39.787565  5090  6508 E AdapterLib_SignalHelper: 	at android.os.Parcel.readException(Parcel.java:3307)
+05-21 11:54:39.787565  5090  6508 E AdapterLib_SignalHelper: 	at android.os.Parcel.readException(Parcel.java:3249)
+05-21 11:54:39.787565  5090  6508 E AdapterLib_SignalHelper: 	at android.car.hardware.property.ICarProperty$Stub$Proxy.setProperty(ICarProperty.java:755)
+05-21 11:54:39.787565  5090  6508 E AdapterLib_SignalHelper: 	at android.car.hardware.property.CarPropertyManager.lambda$setProperty$3(CarPropertyManager.java:2972)
+05-21 11:54:39.787565  5090  6508 E AdapterLib_SignalHelper: 	at android.car.hardware.property.CarPropertyManager.$r8$lambda$D25BzYto_s5Fw2qXlbmq0RR-DOg(Unknown Source:0)
+05-21 11:54:39.787565  5090  6508 E AdapterLib_SignalHelper: 	at android.car.hardware.property.CarPropertyManager$$ExternalSyntheticLambda4.call(D8$$SyntheticClass:0)
+05-21 11:54:39.787565  5090  6508 E AdapterLib_SignalHelper: 	at android.car.hardware.property.CarPropertyManager.runSyncOperation(CarPropertyManager.java:2565)
+05-21 11:54:39.787565  5090  6508 E AdapterLib_SignalHelper: 	at android.car.hardware.property.CarPropertyManager.setProperty(CarPropertyManager.java:2971)
+05-21 11:54:39.787565  5090  6508 E AdapterLib_SignalHelper: 	at android.car.hardware.property.CarPropertyManager.setIntProperty(CarPropertyManager.java:3090)
+05-21 11:54:39.787565  5090  6508 E AdapterLib_SignalHelper: 	at com.mychery.adapter.lib.vehicle.SignalHelper.setIntProperty(SignalHelper.java:513)
+05-21 11:54:39.787565  5090  6508 E AdapterLib_SignalHelper: 	at com.mychery.adapter.lib.vehicle.SignalHelper.setFunctionValue(SignalHelper.java:458)
+05-21 11:54:39.787565  5090  6508 E AdapterLib_SignalHelper: 	at com.mychery.adapter.lib.vehicle.VehicleManager.setFunctionValue(VehicleManager.java:170)
+05-21 11:54:39.787565  5090  6508 E AdapterLib_SignalHelper: 	at com.epicgames.asis.AdapterApiHelper.setFunctionValue(AdapterApiHelper.java:110)
+05-21 11:54:39.787565  5090  6508 E AdapterLib_SignalHelper: 	at com.epicgames.asis.UnrealSharedInstanceService$IncomingHandler.eventProtobufCallback(UnrealSharedInstanceService.java:422)
+05-21 11:54:39.787565  5090  6508 E AdapterLib_SignalHelper: 	at com.epicgames.asis.Engine.AndroidThunkJava_Engine_ReceiveProtobufEvent(Engine.java:534)
+05-21 11:54:39.787619  5090  6508 I AdapterLib_SignalHelper: [ (SignalHelper.java:880)#supportsReceivingData ]supportsReceivingData: functionId=40974(0xA00E), carSignalId=557883514, result=true
+05-21 11:54:39.787695  5090  6508 I AdapterLib_SignalHelper: [ (SignalHelper.java:853)#delayedReRead ]delayedReRead: cancel pending task for functionId=40974(0xA00E), areaId=0
+05-21 11:54:39.787731  5090  6508 I AdapterLib_SignalHelper: [ (SignalHelper.java:856)#delayedReRead ]delayedReRead: schedule feedback task in 3s for functionId=40974(0xA00E), areaId=0
+05-21 11:54:39.794494  1552  2404 I android.hardware.sensors@aidl-service.st: "ASM330LHH Accelerometer Sensor": received new sensor data: x=0.702891 y=1.581654 z=9.614949, ts=4055932848969 (sensor type: 1).
+
+carservice看下，设置 ID_REAR_VIEW_MIRROR_FOLD_STS 发生异常
+
+
+
+看下 /home/huangyouchang/桌面/v25国内EOLBusMirror数据上传平台调试  这个目录下的截图，这是需求截图。
+VCCM的mcu会收集整车数据，通过BusMirror协议传给android的DataGatherService.DataGatherService如何与VCCM交互，需求里有提到。
+请你详细梳理需求，把每一个要点列出来。
+
+针对此需求，/home/huangyouchang/workspace/maple/maple/MapleCarController 的DataGatherService以及eol/data目录下，已经实现了一版。
+请你对比你刚才梳理的要点，再检查一下，还有哪些细节没有实现
+
+
+
+单独的apk下载：
+http://whjk-artifactory.i-tetris.com/
+maven pelte maple，然后选分支，选对应的apk
+
+看apk编译的版本信息：
+https://git.i-tetris.com/
+进入BROWSE,检索 apk_prebuilt,选择s55d（即maple）,点击browse
+选择对应的分支，然后选maple.json,可以看到每个app的编译版本
+
+
+icar外部apk新增步骤：
+第1次手动给他集成，放在third party下面给他建一个目录，参考其他的就行；后面找桂索或者杰哥在外部仓给他建一个仓库，让他自己上传
+外部仓库地址：https://mega-gitlab.megatronix.com:8899/iCAR/chery
+https://mega-gitlab.megatronix.com:8899/iCAR/easyconn
+@A123456
+hongjie.tao@megatronix.co
+不用源码里添加， 可以直接在gitlab中新建。建议放在system/app目录下。vendor/app目录下的app，权限处理比较麻烦
+
+
+智能车联平台（VMP，拉取日志）：
+https://xsso.i-tetris.com/#/login?jump_app_id=100150000&jump_url=https%3A%2F%2Fvmp-chery.i-tetris.com%2F%23login_using_sso%3Ftarget%3D
+账号：eric@megatronix.co
+密码：@mega#cdc!
+
+
+
+
+
+
+
 
 
 

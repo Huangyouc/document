@@ -1,0 +1,25 @@
+icar 
+备电模式，主要为了保证tbox功能；
+tbox语音不依赖audio（android的audio，tbox通话自己的audio）
+
+carpower做处理：
+1.收到备电模式，转成str的模式，走到str的最后一步，不要进入正在的str，要等着，等mcu给真正的str请求。
+恢复的时候
+2.应用自己监听备电模式信号，
+
+carpower以上到android 发 str，carpower以下比如icservice发备电模式（说明cpu并没有停），并不能省电，毕竟各个应用主动接电源str模式的很少
+
+
+
+
+tbox和android有两个耦合：gps信号是android传给tbox；android和tbox有数据上报的交互；
+
+rmu单独处理备电模式：没必要，很多应用包括rmu，没接入过 电源模式 
+
+从备电模式恢复后，是走正常的重启，所以不用考虑备电模式恢复的问题。
+
+1.power_policy.xml新增备电模式，把不需要的模块关掉
+2.所有android应用能杀的杀（车模，avm、语音、dvr等，暂停视频、媒体等，有可能需要这些应用自己监听备电模式，不要执行耗电操作，能关就关，不考虑恢复），然后拉一个空白activity到前台
+3.tbox关闭android网络，保留tbox访问网络的能力
+
+

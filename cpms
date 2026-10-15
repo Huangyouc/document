@@ -1,0 +1,17 @@
+唤醒流程
+休眠流程和关机流程有什么区别
+车机直接断电，和休眠流程以及关机流程有什么区别
+
+排查下电问题时，最重要的是确认：
+
+  1. VHAL 是否发送了正确的 SHUTDOWN_PREPARE；
+  2. CPMS 是否进入 PRE_SHUTDOWN_PREPARE；
+  3. 是否卡在 listener completion；
+  4. 是否发送了 sendShutdownPrepare()；
+  5. 是否收到 VHAL FINISHED；
+  6. 是否进入 POST_*_ENTER；
+  7. SystemInterface.shutdown/enterDeepSleep 是否被调用；
+  8. 唤醒后的状态是否正确回到 WAIT_FOR_VHAL 和 ON；
+  9. power policy 是否成功应用；
+  10. Mega/QNX 状态同步是否与 Android 状态一致。
+
